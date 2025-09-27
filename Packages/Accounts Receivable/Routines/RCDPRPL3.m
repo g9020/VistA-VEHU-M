@@ -1,5 +1,5 @@
 RCDPRPL3 ;WISC/RFJ-receipt profile listmanager options ;1 Jun 99
- ;;4.5;Accounts Receivable;**114,148,153,173,301,326,367,371,409,424**;Mar 20, 1995;Build 11
+ ;;4.5;Accounts Receivable;**114,148,153,173,301,326,367,371,409,424,446**;Mar 20, 1995;Build 15
  ;;Per VA Directive 6402, this routine should not be modified.
  Q
  ;
@@ -66,9 +66,22 @@ PROCESS ;  option: process receipt
  S RCEFT=+$P($G(^RCY(344,RCRECTDA,0)),U,17),RCERA=$P($G(^(0)),U,18),RCHAC=0
  S RCAMT=+$$PAYTOTAL^RCDPURED(RCRECTDA)
  ;
+ ; PRCA*4.5*446 Check EFT, verify EFT has not been posted on a different receipt
+ S RCQUIT=0
+ I RCEFT D  Q:RCQUIT
+ . ; Count receipts for EFT
+ . N COUNTRPT,RCRPTCNT,RCRPTLST
+ . S RCRPTCNT="",COUNTRPT=0,RCRPTLST=""
+ . F  S RCRPTCNT=$O(^RCY(344,"AEFT",RCEFT,RCRPTCNT)) Q:'RCRPTCNT  S:$L(RCRPTLST) RCRPTLST=RCRPTLST_"," S COUNTRPT=COUNTRPT+1,RCRPTLST=RCRPTLST_$P($G(^RCY(344,RCRPTCNT,0)),U,1)
+ . I COUNTRPT>1 D  S RCQUIT=1 Q  ; EFT is posted on a different receipt
+ . . W !,"This receipt cannot be processed because EFT ",$P($G(^RCY(344.31,RCEFT,0)),U,1)," is already on a receipt."
+ . . W !,"Receipts: ",RCRPTLST
+ . . S VALMSG="EFT "_$P($G(^RCY(344.31,RCEFT,0)),U,1)_" is already on a receipt. "
+ . . D RET^RCDPEWL2  ; Pause before returning to list
+ ;
  S RCQUIT=0
  I RCERA,'RCEFT D  Q:RCQUIT
- . I +$P($G(^RCY(344.4,+RCERA,0)),U,5)'=RCAMT D  S RCQUIT=1 Q
+ . I $P($G(^RCY(344.4,+RCERA,0)),U,5)'=RCAMT D  S RCQUIT=1 Q
  . . W !,"This receipt cannot be processed because the total amount of the associated"
  . . W !," ERA ("_$J(+$P($G(^RCY(344.4,+RCERA,0)),U,5),"",2)_") does not equal the total amount on the receipt ("_$J(RCAMT,"",2)_")"
  . . S VALMSG="Receipt total not = ERA total - Receipt NOT processed"

@@ -1,11 +1,13 @@
-SDHL7CON ;MS/TG/MS/PB - TMP HL7 Routine;JULY 05, 2018
- ;;5.3;Scheduling;**704,773,812,858**;May 29, 2018;Build 2
+SDHL7CON ;MS/TG/MS/PB/GN - TMP HL7 Routine;Jul 22, 2024
+ ;;5.3;Scheduling;**704,773,812,858,879**;Aug 13, 1993;Build 31
  ;
  ;  Integration Agreements:
  ;
  ;SD*5.3*773 - Removed unused function TMCONV
  ;SD*5.3*812 - Removed code that sent AA for "No consults found" and then quit the process
  ;SD*5.3*858 - Filter out a MRTC type RTC from being returned to TMP till a future patch restores this feature.
+ ;SD*5.3*879 - Add MRTC support back in by removing the 858 restriction.
+ ;             Also init start & end date params to read less from the files Consult file #123 & RTCS in file #409.85, set all Return error text fields to length 99.
  Q
  ;
 PARSEQ13 ;Process QBP^Q13 messages from the "TMP VISTA" Subscriber protocol
@@ -81,8 +83,10 @@ PARSEQ13 ;Process QBP^Q13 messages from the "TMP VISTA" Subscriber protocol
  . Q
  S DATAROOT=$NA(^TMP("ORQQCN",$J,"CS"))
  K @DATAROOT
- D LIST(.LST,QRYDFN)
- D RTCLIST(.RTCLST,QRYDFN)
+ ;879 init Start & End dates of data to read and pass these to the below Consult (LIST) & RTC (RTCLIST) tags
+ N SDSDT,SDEDT S SDSDT=$$FMADD^XLFDT(DT,-730),SDEDT=$$FMADD^XLFDT(DT,+730)    ;879
+ D LIST(.LST,QRYDFN,SDSDT,SDEDT)
+ D RTCLIST(.RTCLST,QRYDFN,SDSDT,SDEDT)
  ;
  S HIT=0,EXTIME=""
  ;
@@ -226,7 +230,7 @@ RTCLIST(SDY,SDPT,SDSDT,SDEDT) ; return patient's "Return to Clinic" appointment 
  ;SDPT = dfn of patient
  ;SDSDT = start date (based on CREATE DATE of request)
  ;SDEDT = end date (based on END DATE of request)
- N IDX,IEN,SDEC0,REQDT,CNT,CLINID,CID,STOP,PRVID,CMTS,MRTC,RTCINT,RTCINT,RTCPAR
+ N IDX,IEN,SDEC0,REQDT,CNT,CLINID,CID,STOP,PRVID,CMTS,MRTC,RTCINT,RTCPAR
  S SDY=$NA(^TMP("SDHL7CON",$J,"RTCLIST")) K @SDY
  S SDSDT=$G(SDSDT,"ALL"),SDEDT=$G(SDEDT),CNT=0
  Q:'$G(SDPT)  ; Return nothing if no patient passed
@@ -238,14 +242,16 @@ RTCLIST(SDY,SDPT,SDSDT,SDEDT) ; return patient's "Return to Clinic" appointment 
  . I $P(SDEC0,U,17)'="O" Q
  . S REQDT=$P(SDEC0,U,2) I SDSDT'="ALL",$P(REQDT,".",1)<SDSDT!($P(REQDT,".",1)>SDEDT) Q
  . S CLINID=$P(SDEC0,U,9),CID=$P(SDEC0,U,16),PRVID=$P(SDEC0,U,13),CMTS=$P(SDEC0,U,18),CMTS=$E(CMTS,1,80)
- . S:$P($G(^SDEC(409.85,IEN,3)),"^")=1 MRTC=$P($G(^SDEC(409.85,IEN,3)),"^",3),RTCINT=$P($G(^SDEC(409.85,IEN,3)),"^",2),RTCPAR=$P($G(^SDEC(409.85,IEN,3)),"^",5)
+ . S MRTC=+$P($G(^SDEC(409.85,IEN,3)),"^",3)                      ;879 This 3rd peice is sometimes null and sometimes 0, when not a MRTC, so change how init and used below
+ . S:MRTC RTCINT=$P($G(^SDEC(409.85,IEN,3)),"^",2),RTCPAR=$P($G(^SDEC(409.85,IEN,3)),"^",5)
  . S:$G(RTCPAR)="" RTCPAR=IEN
- . S:$G(MRTC)="" MRTC=0 S:$G(RTCINT)="" RTCINT=0
- . Q:$P($G(^SDEC(409.85,IEN,3)),U,1)    ;858 this Requests rec is MRTC related do not return.
+ . ;879 altered quit from ALL MRTC Requests of patch 858, to quit if only if a Parent MRTC Request has children Requets. If Parent Request has no children, then must show parent to Tmp.
+ . I MRTC,$P($G(^SDEC(409.85,IEN,3)),"^",5)="",$$CHILDREN^SDHLAPT2(IEN) Q
+ . S:MRTC=0 MRTC=""   ;879
  . I +CLINID D
  . . S CLINNM=$$GET1^DIQ(44,CLINID_",",".01")
  . . S STOP=$$GET1^DIQ(44,CLINID_",",8)_","_$$GET1^DIQ(44,CLINID_",",2503)
- . S CNT=CNT+1,@SDY@(CNT)=IEN_U_REQDT_U_CLINID_U_CID_U_PRVID_U_CMTS_U_$G(MRTC)_U_$G(RTCINT)_U_$G(RTCPAR)
+ . S CNT=CNT+1,@SDY@(CNT)=IEN_U_REQDT_U_CLINID_U_CID_U_PRVID_U_CMTS_U_MRTC_U_$G(RTCINT)_U_$G(RTCPAR)
  S @SDY=CNT
  Q
 PARSESEG(SEG,DATA,HL) ;Generic segment parser

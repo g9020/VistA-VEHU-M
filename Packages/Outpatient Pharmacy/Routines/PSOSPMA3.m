@@ -1,5 +1,5 @@
 PSOSPMA3 ;BIRM/MFR - ASAP Definitions Listman Actions Handler ;11/11/15
- ;;7.0;OUTPATIENT PHARMACY;**451,625**;DEC 1997;Build 42
+ ;;7.0;OUTPATIENT PHARMACY;**451,625,772**;DEC 1997;Build 105
  ;
 SHOWHID ; Handles Show/Hide Details
  ; (PSOSHOW: 1: Show Segment Tree only; 2: Show Segments & Data Elements; 3: Show Data Element Details)
@@ -25,11 +25,11 @@ CV ; Loop Prompt
  I $D(VERS(Y_" ")) W !!?3,"ASAP Version '",Y,"' already exists.",$C(7) G CV
  S NEWASVER=Y
  S X="",DEFTYPE="B"
- I $G(VERS(PSOASVER_" "))="C" D  I X="^" G BACK
+ I $G(VERS(PSOASVER_" "))="C"!$$CLONE^PSOSPML3(PSOASVER) D  I X="^" G BACK   ; 772 "standard clone" ASAP version
  . W ! S X=$$ASKFLD("Y","YES","Copy Customizations") I X="^" Q
  . S DEFTYPE=$S(X=1:"B",1:"S")
  W ! S X=$$ASKFLD("Y","NO","Confirm Copy") I X'=1 G BACK
- W ?40,"Copying..." D CLONEVER^PSOSPMU3(PSOASVER,NEWASVER,DEFTYPE) H 1 W "Done.",$C(7)
+ W ?40,"Copying..." D CLONEVER^PSOSPMU3(PSOASVER,NEWASVER,DEFTYPE) H 1 W "Done.",$C(7)   ; PSO*7*772
  S PSOASVER=NEWASVER
  G BACK
  ;
@@ -101,21 +101,8 @@ CSE ; Error Re-Prompt
  I (X'?.AN)!($E(X,$L(X))?1N)!(X[" ") W !,"Invalid Segment ID.",$C(7) G CSE
  I 'LITERAL,'$D(ALLASAP(X)),$D(ALLASAP($$UP^XLFSTR(X))) S X=$$UP^XLFSTR(X)
  S CUSSEG=X W "   ",$P($G(ALLASAP(CUSSEG)),"^",2) W !
- I $D(STDASAP(CUSSEG)) D
- . ; Segment Requirement
- . S X=$$ASKFLD("58.40011,.04",$P($G(ALLASAP(CUSSEG)),"^",4)) I X="^" Q
- . S SEGREQ=X
- . W ! S X=$$ASKFLD("Y","YES","Save Custom Segment") I X'=1 Q
- . W ?40,"Saving..."
- . ; If first time the Segment is being customized, copy; otherwise save
- . I '$D(CUSASAP(CUSSEG)) D
- . . S $P(STDASAP(CUSSEG),"^",4)=SEGREQ
- . . D COPYSEG^PSOSPMU3(PSOASVER,.STDASAP,PSOASVER,CUSSEG)
- . E  D
- . . S $P(CUSASAP(CUSSEG),"^",4)=SEGREQ
- . . D SAVESEG^PSOSPMU3(PSOASVER,CUSSEG,CUSASAP(CUSSEG),ALLASAP)
- . W "OK",$C(7)
- E  D
+ I $D(STDASAP(CUSSEG)) D STDSEGCU^PSOSPMU2(PSOASVER,.STDASAP,.CUSASAP,.ALLASAP,CUSSEG)
+ I '$D(STDASAP(CUSSEG)) D
  . S (Y,NEWSEG)=0
  . I '$D(CUSASAP(CUSSEG)) D  I $D(DIRUT)!$D(DTOUT)!'Y Q
  . . K DIR S DIR(0)="Y",DIR("B")="NO",DIR("A")="Are you adding '"_CUSSEG_"' as a new SEGMENT ID" W $C(7) D ^DIR
@@ -129,7 +116,7 @@ CSE ; Error Re-Prompt
  . F  S X=$$ASKFLD("58.40011,.03",$P(CUSASAP(CUSSEG),"^",3)) Q:X="^"!(X="")  D  I DONE Q
  . . I X="@" S $P(CUSASAP(CUSSEG),"^",3)="" Q
  . . I '$D(ALLASAP(X)),$D(ALLASAP($$UP^XLFSTR(X))) S X=$$UP^XLFSTR(X)
- . . I '$D(ALLASAP(X)) W !,"Parent Segment ID not found.",$C(7) Q
+ . . I '$D(ALLASAP(X))!$G(X) W !,"Parent Segment ID not found.",$C(7) Q
  . . I X=CUSSEG W !,"Parent Segment ID cannot be its own parent.",$C(7) Q
  . . W "   ",$P(ALLASAP(X),"^",2)
  . . S $P(CUSASAP(CUSSEG),"^",3)=X,DONE=1
@@ -170,7 +157,7 @@ CSE ; Error Re-Prompt
  ;
 CUSELM ; Handles the 'Customize Element' Action
  N CUSELM,DIR,DIRUT,DTOUT,X,Y,STDASAP,CUSASAP,SEGID,ELMPOS,MAXLEN,ELMREQ,NEWELM,ELMDATA
- N DIC,DWPK,I,MEXPR,LINE,HLPTXT,CUSELMS,CNT,ELM
+ N DIC,DWPK,I,MEXPR,LINE,HLPTXT,CUSELMS,CNT,ELM,CLONE,SEGID,ELMPOS
  I PSOASVER="1995" S VALMSG="ASAP 1995 Version cannot be customized" W $C(7) G EXIT
  I '$$SECKEY() G EXIT
  I '$$LOCK() G EXIT
@@ -208,6 +195,28 @@ CEE ; Error Re-Prompt
  ;
  S ELMPOS=+ELMPOS
  I $D(STDASAP(SEGID,ELMPOS)) D
+ . K ELMDATA
+ . N POPOUT S POPOUT=0
+ . ; 772 Begin
+ . I $L($P($G(STDASAP),"^",6)) D  Q:POPOUT  ; This is a cloned ASAP version, allow edit of name and format
+ . . ; Data Element Name
+ . . S X=$$ASKFLD("58.400111,.02",$P($G(ALLASAP(SEGID,ELMPOS)),"^",2)) I X="^" S POPOUT=1 Q
+ . . S $P(ELMDATA,"^",2)=X
+ . . ; Data Element Format
+ . . S X=$$ASKFLD("58.400111,.03",$P($G(ALLASAP(SEGID,ELMPOS)),"^",3)) I X="^" S POPOUT=1 Q
+ . . S $P(ELMDATA,"^",3)=X
+ . . ; Data Element Description
+ . . W !,"DESCRIPTION:" K ^TMP("PSOASDES",$J)
+ ..  ; Transferring Description from Local Array ALLASAP to ^TMP($J)
+ . . F I=1:1 Q:'$D(ALLASAP(SEGID,ELMPOS,"DES",I))  D
+ . . . S ^TMP("PSOASDES",$J,I,0)=ALLASAP(SEGID,ELMPOS,"DES",I)
+ . . K DIC S DWPK=1,DIC="^TMP(""PSOASDES"","_$J_"," D EN^DIWE
+ . . ; Transferring Description from ^TMP($J) to Local Array CUSASAP
+ . . F I=1:1 Q:'$D(^TMP("PSOASDES",$J,I,0))  D
+ . . . S ELMDATA("DES",I)=^TMP("PSOASDES",$J,I,0)
+ . . S $P(ELMDATA,"^",1)=CUSELM
+ . . S $P(ELMDATA,"^",5)=ELMPOS
+ . . ; 772 End
  . ; Data Element Maximum Length
  . S X=$$ASKFLD("58.400111,.04",$P($G(ALLASAP(SEGID,ELMPOS)),"^",4)) I X="^" Q
  . S MAXLEN=X
@@ -225,18 +234,22 @@ CEE ; Error Re-Prompt
  . I '$D(CUSASAP(SEGID,ELMPOS)) D
  . . ; The Custom ASAP Segment node might not be present (1st time), therefore it must be created
  . . I '$D(CUSASAP(SEGID)) D COPYSEG^PSOSPMU3(PSOASVER,.STDASAP,PSOASVER,SEGID)
+ . . I $$CLONE^PSOSPML3(PSOASVER) D CUSTDEL^PSOSPMU2(PSOASVER,SEGID,ELMPOS,ELMDATA,.STDASAP)   ; PSO*7*772
  . . S $P(STDASAP(SEGID,ELMPOS),"^",4)=MAXLEN
  . . S $P(STDASAP(SEGID,ELMPOS),"^",6)=ELMREQ
  . . S STDASAP(SEGID,ELMPOS,"VAL",1)=MEXPR
+ . . K STDASAP(SEGID,ELMPOS,"DES") M STDASAP(SEGID,ELMPOS,"DES")=ELMDATA("DES")
  . . D COPYELM^PSOSPMU3(PSOASVER,.STDASAP,PSOASVER,CUSELM)
- . E  D
+ . I $D(CUSASAP(SEGID,ELMPOS)) D
+ . . I $$CLONE^PSOSPML3(PSOASVER) D CUSTDEL^PSOSPMU2(PSOASVER,SEGID,ELMPOS,ELMDATA,.CUSASAP)   ; PSO*7*772
  . . S $P(CUSASAP(SEGID,ELMPOS),"^",4)=MAXLEN
  . . S $P(CUSASAP(SEGID,ELMPOS),"^",6)=ELMREQ
  . . S CUSASAP(SEGID,ELMPOS,"VAL",1)=MEXPR
- . . K ELMDATA M ELMDATA=CUSASAP(SEGID,ELMPOS)
- . . D SAVEELM^PSOSPMU3(PSOASVER,SEGID,CUSELM,.ELMDATA)
+ . . K CUSASAP(SEGID,ELMPOS,"DES") M CUSASAP(SEGID,ELMPOS,"DES")=ELMDATA("DES")
+ . . K ELMDATA M ELMDATA=CUSASAP(SEGID,ELMPOS)  ; If legacy standard (not standard copy), reset element values
+ . . D SAVEELM^PSOSPMU3(PSOASVER,SEGID,CUSELM,.ELMDATA,$G(CLONE))
  . W "OK",$C(7)
- E  D
+ I '$D(STDASAP(SEGID,ELMPOS)) D
  . K ELMDATA S (Y,NEWELM)=0
  . I '$D(CUSASAP(SEGID,ELMPOS)) D  I $D(DIRUT)!$D(DTOUT)!'Y Q
  . . K DIR S DIR(0)="Y",DIR("B")="NO",DIR("A")="Are you adding '"_CUSELM_"' as a new DATA ELEMENT" W $C(7) D ^DIR

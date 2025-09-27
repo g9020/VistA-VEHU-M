@@ -1,5 +1,5 @@
-SDES2BLDAPPT2 ;ALB/LAB,JAS,LAB - VISTA SCHEDULING BUILDING APPT OBJECT FROM PATIENT ;MAY 15, 2024
- ;;5.3;Scheduling;**871,877,880**;Aug 13, 1993;Build 5
+SDES2BLDAPPT2 ;ALB/LAB,JAS,LAB - VISTA SCHEDULING BUILDING APPT OBJECT FROM PATIENT ;JUL 01,2025
+ ;;5.3;Scheduling;**871,877,880,916**;Aug 13, 1993;Build 2
  ;;Per VHA Directive 6402, this routine should not be modified
  ;
  Q
@@ -17,6 +17,8 @@ GET2INFO(APPTOBJ,APPTIEN,SDDFN,RECCNT,SDDUZ) ;
  S APPTOBJ("Appointment",RECCNT,"Patient","Gender")=$$GET1^DIQ(2,SDDFN_",",.02,"E")
  S APPTOBJ("Appointment",RECCNT,"Patient","Name")=$$GET1^DIQ(2,SDDFN_",",.01,"E")
  S APPTOBJ("Appointment",RECCNT,"Patient","Street")=$$GET1^DIQ(2,SDDFN_",",.111,"E")
+ S APPTOBJ("Appointment",RECCNT,"Patient","residentialPhone")=$$GET1^DIQ(2,SDDFN_",",.131,"I")
+ S APPTOBJ("Appointment",RECCNT,"Patient","cellularPhone")=$$GET1^DIQ(2,SDDFN_",",.134,"I")
  N SENSITIVE,NEEDSINS
  D SENSITIVE^SDES2UTIL(.SENSITIVE,SDDFN,SDDUZ)
  S APPTOBJ("Appointment",RECCNT,"Patient","SensitivePatientRestrictedRecord")=$S($G(SENSITIVE(1)):1,1:0)

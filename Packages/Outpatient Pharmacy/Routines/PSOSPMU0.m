@@ -1,5 +1,5 @@
 PSOSPMU0 ;BIRM/MFR - State Prescription Monitoring Program - Load ASAP Definition Utility ;10/07/12
- ;;7.0;OUTPATIENT PHARMACY;**451,625**;DEC 1997;Build 42
+ ;;7.0;OUTPATIENT PHARMACY;**451,625,772**;DEC 1997;Build 105
  ;
 LOADASAP(VERSION,DEFTYPE,ASARRAY) ; Loads the ASAP definition array for the specific Version
  ; Input: (r) VERSION - ASAP Version (3.0, 4.0, 4.1, 4.2)
@@ -16,11 +16,12 @@ LOADASAP(VERSION,DEFTYPE,ASARRAY) ; Loads the ASAP definition array for the spec
  . I ASAPDEF="CUSTOM ASAP DEFINITION",DEFTYPE="S" Q
  . S FILEIEN=$O(^PS(58.4,"B",ASAPDEF,0))
  . F VER="ALL",VERSION D
- . . I VER="ALL",VERSION="4.1Z"!(VERSION="4.2Z") Q    ;Zero Report doesn't load "ALL" 
+ . . I VER="ALL",VERSION="4.1Z"!(VERSION="4.2Z")!(VERSION="4.2AZ")!(VERSION="4.2BZ")!(VERSION="5.0Z") Q    ;Zero Report doesn't load "ALL" 
  . . ; - Don't want to load default (ALL) definitions for entirely cloned ASAP versions
  . . I ASAPDEF="STANDARD ASAP DEFINITION",'$D(^PS(58.4,FILEIEN,"VER","B",VERSION)) Q
  . . S VERIEN=$O(^PS(58.4,FILEIEN,"VER","B",VER,0)) I 'VERIEN Q
  . . I VER'="ALL" S ASARRAY=$G(^PS(58.4,FILEIEN,"VER",VERIEN,0))
+ . . I VER="ALL",$$VERZERO^PSOSPMU0(PSOASVER) Q   ; 772 - Don't load "ALL" if ZERO REPORT ASAP VERSION (#.05) indicates Zero Report
  . . S SEGIEN=0
  . . F  S SEGIEN=$O(^PS(58.4,FILEIEN,"VER",VERIEN,"SEG",SEGIEN)) Q:'SEGIEN  D
  . . . S SEGNAM=$P($G(^PS(58.4,FILEIEN,"VER",VERIEN,"SEG",SEGIEN,0)),"^")
@@ -95,9 +96,9 @@ VERLIST(DEFTYPE,REGZERO,ARRAY) ; Return a list of ASAP Versions  ;Zero Report ad
  ;        (r) REGZERO - Regular or Zero Report or Both ASAP Definitions (R: Regular Only; 
  ;                      Z: Zero Report Only; B: Both)
  ;Output:     ARRAY   - ASAP Version List (ARRAY("3.0")="S", ARRAY("4.0")="S", etc...)
- N STDIEN,CUSIEN,VERSION
+ N STDIEN,CUSIEN,VERSION,CLONE   ; Standard CLONE PSO*7*772
  N VER,ZFLG    ;adding Zero Report flag
- K ARRAY
+ K ARRAY S CLONE=""   ; Standard CLONE PSO*7*772
  S STDIEN=$O(^PS(58.4,"B","STANDARD ASAP DEFINITION",0))
  S CUSIEN=$O(^PS(58.4,"B","CUSTOM ASAP DEFINITION",0))
  I DEFTYPE["A"!(DEFTYPE["S") D
@@ -105,9 +106,11 @@ VERLIST(DEFTYPE,REGZERO,ARRAY) ; Return a list of ASAP Versions  ;Zero Report ad
  . . I VERSION="ALL" Q
  . . S VER=$O(^PS(58.4,STDIEN,"VER","B",VERSION,0)) S ZFLG=$P($G(^PS(58.4,STDIEN,"VER",VER,0)),"^",5)
  . . I REGZERO["Z",'ZFLG Q    ;Zero ASAP only
+ . . S CLONE=$$CLONE^PSOSPML3(VERSION)   ; PSO*7*772
  . . I REGZERO["R",ZFLG Q     ;ASAP only
- . . I REGZERO["B",ZFLG S ARRAY(VERSION_" ")="SZ" Q   ;both ASAP and Zero ASAP
+ . . I REGZERO["B",ZFLG S ARRAY(VERSION_" ")="SZ",ARRAY(VERSION_" ","CLONE")=+$G(CLONE) Q   ;both ASAP and Zero ASAP
  . . S ARRAY(VERSION_" ")="S"
+ . . S ARRAY(VERSION_" ","CLONE")=+$G(CLONE)   ; PSO*7*772
  I DEFTYPE["A"!(DEFTYPE["C")!(DEFTYPE["F") D
  . S VERSION="" F  S VERSION=$O(^PS(58.4,CUSIEN,"VER","B",VERSION))  Q:VERSION=""  D
  . . I $D(ARRAY(VERSION_" ")) Q    ;if customized Zero Report
@@ -133,3 +136,26 @@ VERDATA(VERSION,DEFTYPE) ; Returns the ASAP Version fields
  . S VERIEN=$O(^PS(58.4,ASDEFIEN,"VER","B",VERSION,0)) I 'VERIEN Q
  . S VERDATA=$G(^PS(58.4,ASDEFIEN,"VER",VERIEN,0))
  Q VERDATA
+ ;
+VERZERO(PSOASVER)  ; 772 - Is Version PSOASVER a Zero Report?
+ N VERIEN,ZERO
+ Q:'$G(PSOASVER) 0
+ S VERIEN=$O(^PS(58.4,1,"VER","B",PSOASVER,0)) Q:'VERIEN 0
+ S ZERO=$P($G(^PS(58.4,1,"VER",VERIEN,0)),"^",5) Q:ZERO 1
+ Q 0
+ ;
+ ;
+VERSIONLOCKED(VERSEL) ; PSO*7*772 
+ ; check to see if VERSION  is locked
+ ; input - VERSEL = VERSION the end-user selected when
+ ;                  executing the View/Edit ASAP Definitions option (e.g., 5.0)
+ N PSOASDEF,PSOASIEN,PSOVER,PSOVERIEN,RETURN
+ S (PSOVER,RETURN)=0
+ F PSOASDEF="STANDARD ASAP DEFINITION","CUSTOM ASAP DEFINITION" D
+ . Q:RETURN  ; already found the version
+ . S PSOASIEN=$O(^PS(58.4,"B",PSOASDEF,0))
+ . F  S PSOVER=$O(^PS(58.4,PSOASIEN,"VER","B",PSOVER)) Q:PSOVER=""  D
+ . . I VERSEL=PSOVER S PSOVERIEN=$O(^PS(58.4,PSOASIEN,"VER","B",PSOVER,0)) D
+ . . . I +$$GET1^DIQ(58.4001,PSOVERIEN_","_PSOASIEN,.07,"I") S RETURN=1
+ Q RETURN
+ ;

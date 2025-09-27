@@ -1,5 +1,5 @@
 SDCCRSEN ;CCRA/LB,PB - Appointment retrieval API;APR 4, 2019
- ;;5.3;Scheduling;**707,730,735,764,768,741,795,808,822,841,865**;APR 4, 2019;Build 51
+ ;;5.3;Scheduling;**707,730,735,764,768,741,795,808,822,841,865,912**;APR 4, 2019;Build 61
  Q
  ; Documented API's and Integration Agreements
  ; ----------------------------------------------
@@ -8,6 +8,7 @@ SDCCRSEN ;CCRA/LB,PB - Appointment retrieval API;APR 4, 2019
  ; Reference to MAKEADD^TIUSRVP2 in ICR #3535
  ; Reference to $$HL7TFM^XLFDT in ICR #10103
  ; Reference to $$PATCH^XPDUTL in ICR #10141
+ ; Reference to GMR(123 in ICR #4837
  ; Patch 764 changed the SDECEND and SDECSTART times to send them in external format
  ; Patch 741 stopped sending a NAK for inactive clinic status and VistA messages for a successful appointment
  ; Patch 795 added code to lookup up COM CARE-OTEHR-DIVISIONID clinics and to check for the clinic to be non-count
@@ -18,8 +19,9 @@ SDCCRSEN ;CCRA/LB,PB - Appointment retrieval API;APR 4, 2019
  ; PB - patch 841 adding code to improve the scheduler lookup the scheduler based on the schedulers email. 
  ; and adds code to provide additional data to the NAK when a clinic can't be found for the appointment. 
  ; Patch 865 changes the text in the NAK messages to be more meaningful for the end user
+ ; Patch 912 changes how comments are filed in the consult. After the appointment is made, additional comments are created in the activity log of the CCRA consult
+ ;
 EN() ;Primary entry routine for HL7 based CCRA scheduling processing.
- ;Will take all scheduling messages through this one point.
  N FS,CS,RS,ES,SS,MID,HLQUIT,HLNODE,USER,USERMAIL,NAKMSG,ICN,MSH,FMDTTM,STARTFM,MSGTXT,ER,ER1,ER2,ER3
  N MSG,HDR,SEG,SEGTYPE,MSGARY,LASTSEG,HDRTIME,ABORT,BASEDT,CLINARY,COUNT,PROVDTL,RESULTS,P694,TYPE,STARTFM1
  D INT^SDCCRCOR
@@ -30,8 +32,9 @@ EN() ;Primary entry routine for HL7 based CCRA scheduling processing.
  Q
 PROCMSG(MSG1) ; Process message
  N QUIT,I,SEGTYPE,ERR1
- N GMRCDFN,GMRCTIU,GMRCTIUS,CID,ADDTXT,GMRCATIU,STID,RAWSEG,APTTM,DFN,CONID,CONTITLE,PROVIDER,SRVNAME1,SRVNAMEX,LOC,PROV,SDECRESA,DIVID
+ N GMRCDFN,GMRCTIU,GMRCTIUS,CID,ADDTXT,GMRCATIU,STID,RAWSEG,APTTM,DFN,CONID,CONTITLE,PROVIDER,SRVNAME1,SRVNAMEX,LOC,PROV,SDECRESA,DIVID,NEWAPPT
  K SDECSTART,SDECEND,SDDFN,SITECODE,SDECRES,SDECLEN,SDECNOTE,SDECATID,SDECCR,SDMRTC,SDDDT,SDREQBY,SDLAB,PROVIEN,SDID,SDAPTYP,SDSVCP,SDSVCPR,SDCL,SDEKG,SDXRAY,APPTYPE,EESTAT,OVB,SDPARENT,SDEL
+ K SCHSEG,AILSEG,AIPSEG
  S (SDECSTART,SDECEND,SDDFN,SDECRES,SDECLEN,CID,PROV,LOC,SDECNOTE,SDECATID,SDECCR,SDMRTC,SDDDT,SDREQBY,SDLAB,PROVIEN,SDID,SDAPTYP,SDSVCP,SDSVCPR,SDCL,SDEKG,SDXRAY,APPTYPE,EESTAT,OVB,SDPARENT,SDEL)=""
  S ABORT=0,BASEDT=""
  S (QUIT,XX)=0
@@ -40,17 +43,28 @@ PROCMSG(MSG1) ; Process message
  . I SEGTYPE'="NTE" S LASTSEG=SEGTYPE
  . S SEG=$G(MSG1(XX))
  . I SEGTYPE="MSH" D MSH(SEG,.MSGARY)
- . I SEGTYPE="SCH" D SCH(SEG,.MSGARY,.ABORT,.BASEDT) ;SCH MUST BE PROCESSED FIRST SOME VALIDATION DEPENDS ON APPOINTMENT STATUS IN SCH-25
+ . I SEGTYPE="SCH" D SCH(SEG,.MSGARY,.ABORT,.BASEDT)
  . I SEGTYPE="NTE" D NTE(SEG,.MSGARY,LASTSEG,.CLINARY,.ABORT,.PROVDTL)
  . I SEGTYPE="PID" D PID(SEG,.MSGARY,.ABORT)
  . I SEGTYPE="PV1" D PV1(SEG,.MSGARY,HDRTIME,.ABORT)
  . I SEGTYPE="RGS" D RGS(SEG,.MSGARY)
  . I SEGTYPE="AIS" D AIS(SEG,.MSGARY)
+ . I SEGTYPE="AIL" D AIL(SEG,.MSGARY)
  . I SEGTYPE="AIG" D AIG(SEG,.MSGARY,.PROVDTL,BASEDT)
  . I SEGTYPE="AIP" D AIP(SEG,.MSGARY,.PROVDTL,BASEDT)
  K XX
- ;I $G(NAKMSG)'="" S DUZ=.5,QUIT=1 D ANAK^SDCCRCOR($G(NAKMSG),$G(USERMAIL),$G(ICN),$G(DFN),$G(APTTM),$G(CONID))
- ;I +$G(ABORT)=1 D MESSAGE^SDCCRCOR(MID,.ABORT) Q 1
+ ;Patch 912 add code to check to see if this is an original appointment or a follow on.
+ ;if original continue to process and add a new comment to the consult activity lot if the 
+ ;appointment is made successfully. 
+ ;if this is a follow up appointment as determined if the consult status is scheduled and the 
+ ;patient has an appointment on the SDECSTART date/time, then don't make the call to make the appointment
+ ;just add the new comment to the consult activity log.
+ S NEWAPPT=0 S NEWAPPT=$$CHKAPPT^SDCCRSEN2(CONID,MSGARY("EVENT")) ;If NEWAPPT = 0 it is a new appointment and let it process, if NEWAPPT = 1 it is a follow on appointment so only add the comment to the consult activity log
+ I NEWAPPT=1&(MSGARY("EVENT")="SCHEDULE") D ADDCOMMENT^SDCCRSEN2(SDECSTART,PROV,PROV1,PROVADD)
+ I NEWAPPT=1&(MSGARY("EVENT")="CANCEL") D ADDCANCOMMENT^SDCCRSEN2(SDECSTART,PROV,PROV1,PROVADD)
+ I NEWAPPT=1&(MSGARY("EVENT")="NOSHOW") D NOSHOWCOMMENT^SDCCRSEN2(SDECSTART,PROV,PROV1,PROVADD)
+ ;D APPERROR^%ZTER("SDCCRSEN 68")
+ I $G(NEWAPPT)=1 Q 0
  I +$G(ABORT)=2 D APPMSG^SDCCRCOR(MID,.ABORT) Q 1
  I +$G(QUIT)=1 Q 1
  S QUIT=0
@@ -58,11 +72,10 @@ PROCMSG(MSG1) ; Process message
  I MSGARY("EVENT")="CANCEL" D CANCEL^SDCCRSEN1
  I MSGARY("EVENT")="NOSHOW" D NOSHOW^SDCCRSEN1
  D DONEINC^SDCCRCOR
- K MSG1,SDRES,SDECY,SDECDATE,SDECAPTID,RSNAME,SDAPTYP,SDCL,SDDFN,SDECNOT,SDECNOTE,INP,RET
+ K MSG1,SDRES,SDECY,SDECDATE,SDECAPTID,RSNAME,SDAPTYP,SDCL,SDDFN,SDECNOT,SDECNOTE,INP,RET,SCHSEG,AIPSEG,AILSEG,NPI,TEXT,SITE,STREET1,STREET
  Q QUIT
 SETEVENT(EVENT,MSGARY) ;Takes the scheduling event and sets a message event to process.
  ;EVENT (I/REQ) - Message event from the MSH header. EX. S12, S14, S15, S26
- ;MSGARY (I/O,REQ) message array structure with reformatted and translated data ready for filing. See PARSEMSG for details.
  I $G(EVENT)="" Q 0
  I EVENT="S12" S MSGARY("EVENT")="SCHEDULE" Q 1
  I EVENT="S15" S MSGARY("EVENT")="CANCEL" Q 1
@@ -99,8 +112,6 @@ SCH(SCH,MSGARY,ABORT,BASEDT) ;SCH segment processing.:
  .S:DUZ=0 USERMAIL=$$UP^XLFSTR($G(SCH(13,1,4))) S:$G(USERMAIL)'="" DUZ=$O(^VA(200,"ADUPN",$G(USERMAIL),""))
  S:$G(DUZ)'>0 DUZ=$O(^VA(200,"ADUPN",$E(USERMAIL,1,30),"")) ;29 JAN 2020 - PB - Change for patch 735 to look emails longer than 30 characters
  I $G(DUZ)'>0 S:$G(USERMAIL)'="" DUZ=$O(^VA(200,"ADUPN",$$UP^XLFSTR(USERMAIL),""))
- ;I DUZ'>0 S DUZ=.5,(NAKMSG,ERR1)="SCHEDULER DOESN'T HAVE AN ACCOUNT ON THIS SYSTEM",ABORT="1^"_ERR1 Q
- ;I DUZ'>0 S DUZ=.5,(NAKMSG,ERR1)=$P($T(REJECTREASONS+1^SDCCRCOR),";;",2),ABORT="1^"_ERR1 Q  ;PB - Patch 865 changing error messages
  I DUZ'>0 D
  .S TYPE=$S(MSGARY("EVENT")="CANCEL":1,MSGARY("EVENT")="SCHEDULE":"",1:"")
  .S QUIT=$$MSGTXT^SDCCRSEN1("SCHEDULER "_$G(USERMAIL)_" DOESN'T HAVE AN ACCOUNT ON THIS SYSTEM",TYPE),DUZ=.5,ABORT="1^"_ERR1 Q  ;PB - Patch 865 changing error messages
@@ -147,11 +158,11 @@ PV1(PV1,MSGARY,HDRTIME,ABORT) ;PV1 segment
  S CONSULTID=0,(CONID,CONSULTID)=$G(PV1(19))
  S MSGARY("FILLER ID")=CONSULTID
  S SDAPTYP="C|"_$G(CONSULTID)
+ ;S SDAPTYP=""
  N Y,RESNAME
  S DIVID=$G(PV1(3,1,4))
  S CID=$$GET1^DIQ(123,$G(CONSULTID)_",",17,"E") S:$G(CID)'="" CID=$P($$FMTE^XLFDT(CID,1),"@",1)
  S SDECRESA=$$GET1^DIQ(123,$G(CONSULTID)_",",1,"I"),(CONTITLE,SRVNAME)=$$GET1^DIQ(123,$G(CONSULTID)_",",1,"E")
- ;I $G(SRVNAME)'["COMMUNITY CARE" S (NAKMSG,ERR1)="Not a Community Care Consult",ABORT="2^"_ERR1 Q
  I $G(SRVNAME)'["COMMUNITY CARE" S QUIT=$$MSGTXT^SDCCRSEN1("Not a Community Care Consult"),ABORT="2^"_ERR1 Q  ;PB - Patch 865 changing error messages
  ; patch 808 - PB lookup the clinic in the Related Hospital Location multiple in the Request Services file (#123.5), gets the last clinic in the list
  I $G(^GMR(123.5,SDECRESA,123.4,0))'="" D
@@ -180,6 +191,23 @@ RGS(RGS,MSGARY) ; RGS segment
  Q
 AIS(AIS,MSGARY) ;AIS segment
  Q
+AIL(AIL,MSGARY,PROVDTL,BASEDTE) ;AIL segment processing.
+ ;Per HL7 this field can repeat within each RGS group.
+ ;AIL (I/REQ) - AIL message segment data
+ ;MSGARY (I/O,REQ) message array structure with unformatted and translated data ready for filing. See PARSEMSG for details.
+ D PARSESEG^SDCCRSCU(AIL,.AIL)
+ S PROVADD=$TR($G(AIL(3,1,1)),"\\T\\","&")
+ N CH1
+ S CH1("&&")="AND"
+ S PROVADD=$$REPLACE^XLFSTR(PROVADD,.CH1)
+ N CHG1,TEXT,TEXT1
+ S CHG1("\T\")="&"
+ S TEXT=$P(AIL(3,1,1),",",1)
+ S TEXT1=$$REPLACE^XLFSTR(TEXT,.CHG1)
+ S SITE=$P(TEXT1,"-",1),STREET=$P(TEXT1,"-",2)
+ I $G(STREET)[";" S STREET1=$P(STREET,";"),STREET2=$P(STREET,";",2) D
+ .I $E(STREET1,$L(STREET1))=" " S STREET=$E(STREET1,1,$L(STREET1)-1)
+ Q 
 AIP(AIP,MSGARY,PROVDTL,BASEDTE) ;AIP segment processing.
  ;Per HL7 this field can repeat within each RGS group.
  ;AIP (I/REQ) - AIP message segment data
@@ -187,7 +215,10 @@ AIP(AIP,MSGARY,PROVDTL,BASEDTE) ;AIP segment processing.
  ;PROVDTL (O,REQ) - AIP date/time and length
  ;BASEDTE (I,REQ) - Appt D/T from SCH
  D PARSESEG^SDCCRSCU(AIP,.AIP)
- S PROV=$G(AIP(3,1,2))_" "_$G(AIP(3,1,3))
+ S PROV=$TR($G(AIP(3,1,2)),"\\T\\","&")_" "_$TR($G(AIP(3,1,3)),"\\T\\","&")
+ N CHG1
+ S CHG1("&&")="AND"
+ S PROV=$$REPLACE^XLFSTR(PROV,.CHG1),NPI=AIP(3,1,1),PROV1=$G(AIP(3,1,2))
  Q
  ;
 AIG(AIG,MSGARY,PROVDTL,BASEDTE) ;AIG segment processing.
@@ -212,9 +243,6 @@ GETSTAT(SCH) ; Translates status into appropriate scheduling statuses
  I (ID'="")!(TITLE'="") S QUIT=$$MSGTXT^SDCCRSEN1("SCHEDULING STATUS MAPPING ERROR"),ABORT="1^ SCHEDULING STATUS MAPPING ERROR" Q
  Q "NA"
 DETTIME(PV1TIME,HDRTIME,ERROR) ;RETURNS THE BEST CHECK IN/OUT TIME AVAILABLE IN THE MESSAGE OR DEFAULTS TO NOW
- ;PV1TIME (I,OPT)   - HIGHEST PRIORITY TIME TO RETURN FROM EITHER PV1-44 OR PV1-45
- ;HDRTIME (I,OPT)   - TIME FROM MSH-7
- ;ERROR   (O,OPT)   - ERROR OUTPUT PARAMETER
  K ERROR
  I $G(PV1TIME)'="" Q $$HL7TFM^XLFDT(PV1TIME,"L")
  I $G(HDRTIME)'="" S ERROR="FALLING BACK TO MSH-7" Q $$HL7TFM^XLFDT(HDRTIME,"L")
@@ -246,7 +274,6 @@ CHECKLST(SRVNAME) ;
  S SRVNAMEX=SRVNAME
  ;Need to check to see if the clinic is inactive - is there an SDEC API for this?
  N INACT S:$G(CLINID)>0 INACT=$$INACTIVE^SDEC32(CLINID)
- ;I $G(INACT)=1 S (NAKMSG,ERR1)="Clinic "_$P(^SC(CLINID,0),"^")_" is inactive",ABORT="1^"_ERR1 Q 0
  I $G(INACT)=1 S QUIT=$$MSGTXT^SDCCRSEN1("Clinic "_$P(^SC(CLINID,0),"^")_" is inactive"),ABORT="1^"_ERR1 Q 0   ;PB - Patch 865 changing error messages
  Q:$G(QUIT)=1
  ;If no matching clinic found look for com care-other-DIVID (DIVID from the PV! segment)

@@ -1,5 +1,5 @@
 RCDPEDA4 ;AITC/DW - ACTIVITY REPORT ;Feb 17, 2017@10:37:00
- ;;4.5;Accounts Receivable;**318,321,326,432,439**;Mar 20, 1995;Build 29
+ ;;4.5;Accounts Receivable;**318,321,326,432,439,446**;Mar 20, 1995;Build 15
  ;Per VA Directive 6402, this routine should not be modified.
  ; Continuation of RCDPEDAR - Daily activity Report
  Q
@@ -203,26 +203,21 @@ DEPBAL(RCDIEN) ;Is the deposit total in balance with EFT amounts ; New subroutin
  ;
  ; Output:  RCBALS, returned via function call
  ;          Piece 1 - 1 if in balance, 0 if out of balance
- ;          Piece 2 - Total of EFTs on the deposit
+ ;          Piece 2 - null (no longer needed PRCA*4.5*446) Total of EFTs on the deposit
  ;          Piece 3 - Deposit Total
  ;
- N DTOT,DEPDATA,EFTDATA,EFTIEN,EFTTOT,RCBALS,XX
- S RCBALS="0^0^0"
+ ; PRCA*4.5*446, Modify sub-routine to use unbalanced flag in 344.3
+ ;
+ N DTOT,DEPDATA,EFTDATA,RCBALS
+ S RCBALS="0^^0"
  ;
  Q:'$G(RCDIEN) RCBALS                                           ; Error condition, IEN is missing or incorrect
  ;
  S DEPDATA=$G(^RCY(344.3,RCDIEN,0)) Q:'$L($G(DEPDATA)) RCBALS   ; Quit if zero node does not exist or has bad data
  S DTOT=$P(DEPDATA,U,8)                                         ; Get total deposit amount
  ;
- ; Find all EFTs on the deposit and total the EFT amounts, EDI THRID PARTY EFT, #344.31
- S EFTIEN="",EFTTOT=0
- F  S EFTIEN=$O(^RCY(344.31,"B",RCDIEN,EFTIEN)) Q:'EFTIEN  D
- . S EFTDATA=$G(^RCY(344.31,EFTIEN,0)) Q:'$L($G(EFTDATA))       ; Quit if zero node does not exist or has bad data
- . S XX=$S($P(EFTDATA,U,16)="D":"-",1:"")_$P(EFTDATA,"^",7)     ; Get the amount and make amount negative if debit indicator
- . S EFTTOT=EFTTOT+XX                                           ; Accumulate EFT Total
- ;
- S $P(RCBALS,U,2)=EFTTOT,$P(RCBALS,U,3)=DTOT
- S $P(RCBALS,U,1)=(+EFTTOT=+DTOT)                                 ; Equal to 1 if EFTTOT=DTOT, 0 otherwise
+ S $P(RCBALS,U,3)=DTOT
+ S $P(RCBALS,U,1)='$$GET1^DIQ(344.3,RCDIEN_",",.15,"I")         ; Equal to 1 if inbalance, 0 otherwise
  ;
  Q RCBALS
  ;

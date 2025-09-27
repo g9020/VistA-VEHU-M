@@ -1,5 +1,5 @@
 PSOBPSU1 ;BIRM/MFR - BPS (ECME) Utilities 1 ;10/15/04
- ;;7.0;OUTPATIENT PHARMACY;**148,260,281,287,303,289,290,358,359,385,403,427,448,482,512,680**;DEC 1997;Build 5
+ ;;7.0;OUTPATIENT PHARMACY;**148,260,281,287,303,289,290,358,359,385,403,427,448,482,512,680,766**;DEC 1997;Build 25
  ; Reference to $$EN^BPSNCPDP in ICR #4415
  ; Reference to $$NDCFMT^PSSNDCUT,$$GETNDC^PSSNDCUT in ICR #4707
  ; Reference to $$ECMEON^BPSUTIL,$$CMOPON^BPSUTIL in ICR #4410
@@ -8,7 +8,7 @@ PSOBPSU1 ;BIRM/MFR - BPS (ECME) Utilities 1 ;10/15/04
  ; Reference to $$RESPONSE^BPSOS03 in ICR #6226
  ; Reference to $$LOG^BPSOSL in ICR #6764
  ;
-ECMESND(RX,RFL,DATE,FROM,NDC,CMOP,RVTX,OVRC,CNDC,RESP,IGSW,ALTX,CLA,PA,RXCOB,PSOVRIEN,PSOPLAN,PSORTYPE) ; - Sends Rx Release 
+ECMESND(RX,RFL,DATE,FROM,NDC,CMOP,RVTX,OVRC,CNDC,RESP,IGSW,ALTX,CLA,PA,RXCOB,PSOVRIEN,PSOPLAN,PSORTYPE,DIAG) ; - Sends Rx Release 
  ;information to ECME/IB and updates NDC in the files 50 & 52; DBIA4702
  ;Input: (r) RX   - Rx IEN (#52)
  ;       (o) RFL  - Refill #  (Default: most recent)
@@ -31,6 +31,7 @@ ECMESND(RX,RFL,DATE,FROM,NDC,CMOP,RVTX,OVRC,CNDC,RESP,IGSW,ALTX,CLA,PA,RXCOB,PSO
  ;       (o) PSOVRIEN - IEN to BPS NCPDP OVERRIDE (#9002313.511)
  ;       (o) PSOPLAN - IEN to file# 355.3, GROUP INSURANCE PLAN
  ;       (o) PSORTYPE - IEN to file# 399.3, RATE TYPE
+ ;       (o) DIAG - Diagnosis Code
  ;Output:    RESP - Response from $$EN^BPSNCPDP api
  ;
  N ACT,NDCACT,DA,PSOELIG,PSOBYPS,ACT1,SMA
@@ -68,11 +69,12 @@ ECMESND(RX,RFL,DATE,FROM,NDC,CMOP,RVTX,OVRC,CNDC,RESP,IGSW,ALTX,CLA,PA,RXCOB,PSO
  . I $P($G(OVRC),"~")'="" S CLSCOM="DUR Override Codes "_$TR($P(OVRC,"~"),"^","/")_" submitted."
  . I $G(CLA)'="" S CLSCOM="Clarification Code(s) "_CLA_" submitted."
  . I $G(PA)'="" S CLSCOM="Prior Authorization Code ("_$P(PA,"^")_"/"_$P(PA,"^",2)_") submitted."
+ . I $G(DIAG)'="" S CLSCOM="Diagnosis Code "_DIAG_" submitted."
  D CLSALL^PSOREJUT(RX,RFL,DUZ,1,$G(CLSCOM),$P($G(OVRC),"~",1),$P($G(OVRC),"~",2),$P($G(OVRC),"~",3),$G(CLA),$G(PA))
  ; - Call to ECME (NEWing STAT because ECME was overwriting it - Important variable for CMOP release PSXVND)
  N STAT
  I $G(RVTX)="",FROM="ED" S RVTX="RX EDITED"
- S RESP=$$EN^BPSNCPDP(RX,RFL,$$DOS(RX,RFL,.DATE),FROM,NDC,$G(RVTX),$G(OVRC),$G(PSOVRIEN),$G(CLA),$G(PA),$G(RXCOB),,,,$G(PSOPLAN),,$G(PSORTYPE))
+ S RESP=$$EN^BPSNCPDP(RX,RFL,$$DOS(RX,RFL,.DATE),FROM,NDC,$G(RVTX),$G(OVRC),$G(PSOVRIEN),$G(CLA),$G(PA),$G(RXCOB),,,,$G(PSOPLAN),,$G(PSORTYPE),,$G(DIAG))
  I $$STATUS^PSOBPSUT(RX,RFL)="E PAYABLE" D
  . D SAVNDC^PSONDCUT(RX,RFL,NDC,+$G(CMOP),1,FROM)
  . ;

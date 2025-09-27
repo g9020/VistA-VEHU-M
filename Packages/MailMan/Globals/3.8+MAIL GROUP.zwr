@@ -1,6 +1,6 @@
 OSEHRA ZGO Export: MAIL GROUP
 ZWR
-^XMB(3.8,0)="MAIL GROUP^3.8^471^447"
+^XMB(3.8,0)="MAIL GROUP^3.8^472^448"
 ^XMB(3.8,1,0)="YS PSYCHTEST^PR^^^^0"
 ^XMB(3.8,1,1,0)="^3.81P^^0"
 ^XMB(3.8,1,2,0)="^^1^1^2921113^^"
@@ -721,7 +721,7 @@ ZWR
 ^XMB(3.8,84,2,1,0)="Incident Reporting V2.0 mailgroup"
 ^XMB(3.8,84,2,2,0)="|"
 ^XMB(3.8,84,3)=1999
-^XMB(3.8,85,0)="MAIL ERRORS^PU^n^2189^3230714^"
+^XMB(3.8,85,0)="MAIL ERRORS^PU^n^2190^3250927^"
 ^XMB(3.8,85,1,0)="^3.81P^4^4"
 ^XMB(3.8,85,1,1,0)=11247
 ^XMB(3.8,85,1,2,0)=10119
@@ -2788,7 +2788,7 @@ ZWR
 ^XMB(3.8,312,0)="GEC2 NATIONAL ROLLUP^PU^y^^^^10000000020"
 ^XMB(3.8,312,3)=10000000020
 ^XMB(3.8,312,6,0)="^3.812^^0"
-^XMB(3.8,313,0)="NEW USER^PU^n^1242^3230714"
+^XMB(3.8,313,0)="NEW USER^PU^n^1243^3250927"
 ^XMB(3.8,313,1,0)="^3.81P^1^1"
 ^XMB(3.8,313,1,1,0)=10000000020
 ^XMB(3.8,313,1,"B",10000000020,1)=""
@@ -3127,7 +3127,7 @@ ZWR
 ^XMB(3.8,370,2,2,0)="status of Transmitted or Retransmitted is discontinued by a background"
 ^XMB(3.8,370,2,3,0)="process to the Pharmacy Options, e.g. CPRS or Registration packages."
 ^XMB(3.8,370,3)=10000000020
-^XMB(3.8,371,0)="PSS ORDER CHECKS^PU^n^8^3181031^0"
+^XMB(3.8,371,0)="PSS ORDER CHECKS^PU^n^9^3250927^0"
 ^XMB(3.8,371,1,0)="^3.81P^1^1"
 ^XMB(3.8,371,1,1,0)=10000000020
 ^XMB(3.8,371,1,"B",10000000020,1)=""
@@ -3414,7 +3414,7 @@ ZWR
 ^XMB(3.8,417,2,0)="^^1^1^3140602"
 ^XMB(3.8,417,2,1,0)="This mail group is to receive updated Person Class messages from the Master Person Class file from Forum account."
 ^XMB(3.8,417,3)=.5
-^XMB(3.8,418,0)="PSO SPMP NOTIFICATIONS^PU^y^^^^1"
+^XMB(3.8,418,0)="PSO SPMP NOTIFICATIONS^PU^y^1^3250927^^1"
 ^XMB(3.8,418,2,0)="^^1^1^3121220^"
 ^XMB(3.8,418,2,1,0)="This mail group will receive error notifications when the background job responsible for transmitting controlled substance prescriptions to the state fails."
 ^XMB(3.8,418,3)=1
@@ -3729,6 +3729,11 @@ ZWR
 ^XMB(3.8,471,2,1,0)=" eMail group to notify designated users via Outlook email of exceptions "
 ^XMB(3.8,471,2,2,0)="encountered when processing Urgent Care push to requesting remote site."
 ^XMB(3.8,471,3)=1
+^XMB(3.8,472,0)="IB PATIENT ACCUMULATOR^PU^y^^^^.5"
+^XMB(3.8,472,2,0)="^^2^2^3250522^"
+^XMB(3.8,472,2,1,0)="MailGroup used for notification of HL7 error responses from VDIF"
+^XMB(3.8,472,2,2,0)="regarding the Means Test Billing Clock syncing process."
+^XMB(3.8,472,3)=1
 ^XMB(3.8,"AB",.5,120,1)=""
 ^XMB(3.8,"AB",.5,372,1)=""
 ^XMB(3.8,"AB",.5,428,1)=""
@@ -4412,6 +4417,7 @@ ZWR
 ^XMB(3.8,"AC",.5,469)=""
 ^XMB(3.8,"AC",.5,470)=""
 ^XMB(3.8,"AC",.5,471)=""
+^XMB(3.8,"AC",.5,472)=""
 ^XMB(3.8,"AC",1,228)=""
 ^XMB(3.8,"AC",1,343)=""
 ^XMB(3.8,"AC",1,347)=""
@@ -4786,6 +4792,7 @@ ZWR
 ^XMB(3.8,"B","IB LTC BACK BILLING",265)=""
 ^XMB(3.8,"B","IB MEANS TEST",80)=""
 ^XMB(3.8,"B","IB NEW INSURANCE",114)=""
+^XMB(3.8,"B","IB PATIENT ACCUMULATOR",472)=""
 ^XMB(3.8,"B","IB RX COPAY CAP ERROR",239)=""
 ^XMB(3.8,"B","IB UC REMOTE",471)=""
 ^XMB(3.8,"B","IB UNBILLED AMOUNTS",129)=""

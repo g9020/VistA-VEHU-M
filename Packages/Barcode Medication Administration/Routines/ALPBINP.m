@@ -1,5 +1,5 @@
-ALPBINP ;OIFO-DALLAS/SED/KC/MW  BCMA - BCBU INPT TO HL7 ;07/06/16 7:06am
- ;;3.0;BAR CODE MED ADMIN;**8,37,73,87,102,105,115**;May 2007;Build 3
+ALPBINP ;OIFO-DALLAS/SED/KC/MW  BCMA - BCBU INPT TO HL7; May 22, 2025@16:
+ ;;3.0;BAR CODE MED ADMIN;**8,37,73,87,102,105,115,153**;May 2007;Build 3
  ;;Per VHA Directive 2004-038, this routine should not be modified.
  ;This routine will intercept the HL7 message that it sent from Pharmacy
  ;to CPRS to update order information. The message is then parsed and 
@@ -244,7 +244,9 @@ PMOV(ALPDFN,ALPTYP,ALPTT,ALPBMDT) ;Entry Point to send patient movement
  S:$G(ALPTT)="DISCHARGE" $P(HLA("HLS",2),HLFS,37)=$G(ALPTYP)
  D SEND
  I ALPTYP=14!(ALPTYP=41) S ALPTT="ADMISSION" ;FOR RETURN FROM ASIH
- I $G(ALPTT)="ADMISSION" D ADMQ
+ ;PSB*3.0*153: ALPNORX indicates this call came from PAT^ALPBIND.
+ ;             No need to task it at ADMQ plus an infinite loop would occur.
+ I $G(ALPTT)="ADMISSION",'$G(ALPNORX) D ADMQ
  ;SEND A DISCHARGE TO DIV SENDING ASIH
  I $G(ALPTYP)[13!($G(ALPTYP)[40) D
  .D INIT

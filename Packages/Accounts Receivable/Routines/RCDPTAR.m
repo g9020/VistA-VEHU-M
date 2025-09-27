@@ -1,5 +1,5 @@
 RCDPTAR ;ALB/TJB - EFT TRANSACTION AUDIT REPORT ;1/02/15
- ;;4.5;Accounts Receivable;**303,321,326,380,371,424,439**;Mar 20, 1995;Build 29
+ ;;4.5;Accounts Receivable;**303,321,326,380,371,424,439,446**;Mar 20, 1995;Build 15
  ;;Per VA Directive 6402, this routine should not be modified.
  ;
  Q
@@ -132,12 +132,12 @@ DN3 ; Lookup Deposit Number by Deposit Date
  . S CTR=CTR+1,ARR(CTR)=CDDT
  . S XX=$$FMTE^XLFDT(CDDT,"5DZ")
  . W !,$J(CTR,3)," ",RCDNUM," on: ",XX
- . S RCDIEN="",RCDBAL="0^0^0"
+ . S RCDIEN="",RCDBAL="1^0^0"
  . F  S RCDIEN=$O(^RCY(344.3,"ADEP2",RCDNUM,CDDT,RCDIEN)) Q:'RCDIEN  D  ; PRCA*4.5*439
  . . S RCDBAL1=$$DEPBAL^RCDPTAR2(RCDIEN)        ; Is deposit in balance with EFT totals, PRCA*4.5*439
- . . S $P(RCDBAL,U,2)=$P(RCDBAL,U,2)+$P(RCDBAL1,U,2),$P(RCDBAL,U,3)=$P(RCDBAL,U,3)+$P(RCDBAL1,U,3)
- . S $P(RCDBAL,U,1)=($P(RCDBAL,U,2)=$P(RCDBAL,U,3))
- . W $J($P(RCDBAL,U,3),19,2)                      ; Deposit total
+ . . S $P(RCDBAL,U,3)=$P(RCDBAL,U,3)+$P(RCDBAL1,U,3)
+ . . S:'$P(RCDBAL1,U,1) $P(RCDBAL,U,1)=0        ;Check for out of balance PRCA*4.5*446
+ . W $J($P(RCDBAL,U,3),19,2)                    ; Deposit total
  . I 'RCDBAL W " **UNBALANCED**"                ; Add UNBALANCED indicator if deposit is not in balance, PRCA*4.5*439
  . I CTR#10=0 D  Q:RCDDT'=""                    ; Ask selection every 10 times
  . . S RCDDT=$$SELDT^RCDPTAR1(CTR,.ARR,RCLOOP)  ; PRCA*4.5*439 add RCLOOP to parameters
@@ -286,8 +286,7 @@ EFT(LOCKIEN) ; Select a single EFT Number
  F ROW=1:1:CNT D  Q:QUIT
  . S DATA=LIST(ROW),EFTIEN=$P(DATA,U,3)
  . D DISPLAY(ROW,EFTIEN)
- . I ROW#5=0!(ROW=CNT) D  I Y>0!(Y=-1) S QUIT=1 Q  ;
- . . S Y=$$READ(1,ROW,CNT)
+ S Y=$$READ(1,ROW,CNT)
  I Y'>0 Q -1
  ;
 EFT1 ;

@@ -1,10 +1,11 @@
 PSSHRIT ;WOIFO/SG,PO - Transmits a "ping" to determine if FDB server is down and record the down time ; Mar 01, 2016@15:34
- ;;1.0;PHARMACY DATA MANAGEMENT;**136,168,164,173,180,184,178,254**;9/30/97;Build 109
+ ;;1.0;PHARMACY DATA MANAGEMENT;**136,168,164,173,180,184,178,254,262**;9/30/97;Build 66
  ;
  ;External reference to IN^PSSHRQ2 supported by DBIA 5369
  ;External reference to File 18.12 supported by DBIA 5891
  ;
  Q
+ ;
 PINGCHK ; do ping test, if not passed record it and send a message.
  ; Called from PSS INTERFACE SCHEDULER option
  N STATUS
@@ -29,9 +30,9 @@ PINGTST() ; test the ping by sending a ping request.
 PINGFILE(STATUS) ;  file the ping results
  ; Input
  ;   Status - Ping results
- ; Return 
+ ; Return
  ;     -1 - if creates an entry - means the first it noticed PEPS is unavailable
- ;      0 - if does not create/update a record, 
+ ;      0 - if does not create/update a record,
  ;      1 - if updates the last entry
  N LIEN,LASTAVL
  S STATUS=+$G(STATUS)
@@ -101,7 +102,7 @@ TASKIT(FREQ,START) ; create/update scheduling option start time and frequency
  ; Input:
  ;   FREQ  - Optional - rescheduling frequency in minutes (default 15 minutes)
  ;  START  - Optional - start time (default is current time + 4 minutes)
- ; Note: if START is less than 4 minutes in future,  it will be defaulted to 
+ ; Note: if START is less than 4 minutes in future,  it will be defaulted to
  ;       current time + 4 minutes.
  ;
  K PSERROR
@@ -119,7 +120,7 @@ TASKIT(FREQ,START) ; create/update scheduling option start time and frequency
  ;
 SCHDOPT ; edit option scheduling
  ; Called from "PSS SCHEDULE PEPS INTERFACE CK" option to create and/or edit the scheduling
- ; parameters for "PSS INTERFACE SCHEDULER" option in OPTION SCHEDULING file. 
+ ; parameters for "PSS INTERFACE SCHEDULER" option in OPTION SCHEDULING file.
  ; The "PSS SCHEDULE PEPS INTERFACE CK" option is installed by PAS*1.0*117 package.
  N PSSROOT,DIR,Y,DTOUT,DUOUT
  ; check to see if the option is defined in option scheduler file and it is tasked.
@@ -174,6 +175,7 @@ RUNTEST ; run interaction test to PEPS server
  W !,"Drug-Drug Interaction Check"
  W !,"Duplicate Therapy Order Check"
  W !,"Dosing Order Check"
+ W !,"Pharmacogenomic Order Check"
  W !,"Custom Drug-Drug Interaction Check"
  ;
  W ! S %ZIS="MQ",%ZIS("A")="Select Device: " D ^%ZIS G EXIT:POP
@@ -188,16 +190,19 @@ EXIT S:$D(ZTQUEUED) ZTREQ="@" Q
 TESTS ; interaction tests to PEPS server
  ;
  S STATUS=$$CONCHK()
- D PRSRTN Q:(STATUS=0)!(X="^") 
+ D PRSRTN Q:(STATUS=0)!(X="^")
  ;
  S STATUS=$$INTERACT()
- D PRSRTN Q:X="^" 
+ D PRSRTN Q:X="^"
  ;
  S STATUS=$$DUPTHRPY()
- D PRSRTN Q:X="^" 
+ D PRSRTN Q:X="^"
  ;
- S STATUS=$$DOSECHK() ;
- D PRSRTN Q:X="^" 
+ S STATUS=$$DOSECHK()
+ D PRSRTN Q:X="^"
+ ;
+ S STATUS=$$PGXCHCK() ; pss*1*262
+ D PRSRTN Q:X="^"
  ;
  S STATUS=$$CUSTOM()
  D PRSRTN Q:X="^"
@@ -217,13 +222,14 @@ QTESTS ; queued interaction tests to PEPS server
  S STATUS=$$INTERACT()
  S STATUS=$$DUPTHRPY()
  S STATUS=$$DOSECHK()
+ S STATUS=$$PGXCHCK() ; pss*1*262
  S STATUS=$$CUSTOM()
  ;
  Q
  ;
 CONCHK() ; check connection
  ; Return 1 if OK, 0 if not OK.
- ; 
+ ;
  N MESSAGE,Y,STATUS,RESULT
  W !,"Checking Vendor Database Connection"
  S RESULT=$$PINGTST()
@@ -237,7 +243,7 @@ CONCHK() ; check connection
  ..W !,"       Last reached @"_$E(Y,1,18)
  W !
  Q $S(RESULT=0:1,1:0)
- ; 
+ ;
 INTERACT() ; check drug-drug interaction.
  ; Return 1 if OK, 0 if not OK.
  ;
@@ -272,7 +278,7 @@ INTERACT() ; check drug-drug interaction.
  ;
 DUPTHRPY() ; check duplicate therapy
  ; Return 1 if OK, 0 if not OK.
- ; 
+ ;
  N PSORDER,PSDRUG1,PSDRUG2,BASE,CLAS1,CLAS2,LINE1,LINE2,INTRO
  N PSSLEFT S PSSLEFT=4     ; left margin for results
  S BASE=$T(+0)_" DUPTHRPY"
@@ -284,7 +290,7 @@ DUPTHRPY() ; check duplicate therapy
  S ^TMP($J,BASE,"IN","PROFILE","O;403931;PROFILE;3")="11666^4006826^^CIMETIDINE 300MG TAB^O"
  S ^TMP($J,BASE,"IN","PROSPECTIVE","Z;1;PROSPECTIVE;1")="11673^4007038^^RANITIDINE 150MG TAB"
  D IN^PSSHRQ2(BASE)
- ; 
+ ;
  S CLAS1=$G(^TMP($J,BASE,"OUT","THERAPY",1,1,"CLASS"))
  S CLAS2=$G(^TMP($J,BASE,"OUT","THERAPY",1,2,"CLASS"))
  S INTRO="Performing Duplicate Therapy Order Check for "_PSDRUG1_" and "_PSDRUG2
@@ -337,6 +343,11 @@ DOSECHK() ; check dosing
  .D OUTPUT(TOTAL,PSSLEFT)
  Q $S($L(TOTAL)=0:0,1:1)
  ;
+PGXCHCK() ; check pgx - pss*1*262
+ ; Return 1 if OK, 0 if not OK.
+ N STATUS S STATUS=$$PGXCHK^PSSPGXUT
+ Q $G(STATUS)
+ ;
 CUSTOM() ; check custom drug-drug interaction
  ; Return 1 if OK, 0 if not OK.
  ;
@@ -368,7 +379,6 @@ CUSTOM() ; check custom drug-drug interaction
  .D OUTPUT(INFO,PSSLEFT)
  W !
  Q $S(STATUS=0:1,$L(INFO)=0:0,1:1)
- ;
  ;
 INTACT ; check vendor data base link
  ; Called from CHECK VENDOR DATABASE LINK  option
@@ -411,7 +421,7 @@ INTACT ; check vendor data base link
  ;----------------------------------------------------
  ;
 PRSRTN ;
- ;calls std routine to ask user to hit return 
+ ;calls std routine to ask user to hit return
  N DIR S DIR(0)="E" D ^DIR
  Q
  ;
@@ -440,7 +450,6 @@ OUTPUT(INFO,DIWL) ;
  S X=INFO,DIWR=$S($G(IOM):IOM,1:60),DIWF="W" D ^DIWP
  D ^DIWW
  Q
- ;
  ;
 SCUST ;Set Custom info
  I $D(^TMP($J,BASE,"OUT","DRUGDRUG","S",DRUG1,ORDER,1)) S INFO=$G(^TMP($J,BASE,"OUT","DRUGDRUG","S",DRUG1,ORDER,1,"PMON",9,0)) Q
