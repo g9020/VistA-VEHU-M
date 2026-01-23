@@ -16825,7 +16825,7 @@ ZWR
 ^DIC(160,"%D",1,0)="Demographic and followup data concerning Oncology patients is stored"
 ^DIC(160,"%D",2,0)="in this file.  (Tumor-related data is stored in the Primary File)."
 ^DIC(160,"%D",3,0)="Data is NOT exported with this file, but it is populated on site."
-^DIC(160,"%MSC")=3241122.153319
+^DIC(160,"%MSC")=3260123.214029
 ^DIC(160.1,0)="ONCOLOGY SITE PARAMETERS^160.1I"
 ^DIC(160.1,0,"GL")="^ONCO(160.1,"
 ^DIC(160.1,0,"GL")="^ONCO(160.1,"
@@ -16912,7 +16912,7 @@ ZWR
 ^DIC(160.16,0,"WR")="@"
 ^DIC(160.16,"%D",0)="^^1^1^2990419^^"
 ^DIC(160.16,"%D",1,0)="This file contains the ONCOLOGY Data Extract Formats."
-^DIC(160.16,"%MSC")=3250524.163301
+^DIC(160.16,"%MSC")=3260123.214029
 ^DIC(160.17,0)="ONCOLOGY PCE EXTRACT FORMAT^160.17"
 ^DIC(160.17,0,"AUDIT")="@"
 ^DIC(160.17,0,"DD")="@"
@@ -18106,7 +18106,7 @@ ZWR
 ^DIC(164.44,"%D",1,0)="This file contains the Grade codes for the GRADE CLINICAL (#24.3),"
 ^DIC(164.44,"%D",2,0)="GRADE PATHOLOGICAL (#24.4) and GRADE POST THERAPY (#24.5) fields of the"
 ^DIC(164.44,"%D",3,0)="ONCOLOGY PRIMARY (#165.5) file."
-^DIC(164.44,"%MSC")=3250524.163301
+^DIC(164.44,"%MSC")=3260123.214029
 ^DIC(164.45,0)="AJCC STAGE GROUP^164.45"
 ^DIC(164.45,0,"AUDIT")="@"
 ^DIC(164.45,0,"DD")="@"
@@ -18451,7 +18451,7 @@ ZWR
 ^DIC(165.5,"%D",1,0)="Tumor-related data for Oncology patients is stored in this file."
 ^DIC(165.5,"%D",2,0)="(Demographic and follow-up data is in the Oncology Patient File)."
 ^DIC(165.5,"%D",3,0)="File is populated in the field by using the abstracting options."
-^DIC(165.5,"%MSC")=3250524.163301
+^DIC(165.5,"%MSC")=3260123.214029
 ^DIC(165.55,0)="CONVERSION FLAGS^165.55"
 ^DIC(165.55,0,"AUDIT")="@"
 ^DIC(165.55,0,"DD")="@"
@@ -18522,7 +18522,7 @@ ZWR
 ^DIC(165.8,"%D",1,0)="This file contains the T, N and M codes as well as the T Suffixes and"
 ^DIC(165.8,"%D",2,0)="N Suffixes and AJCC Chapter and Name for the AJCC Cancer Staging Manual"
 ^DIC(165.8,"%D",3,0)="8th Edition."
-^DIC(165.8,"%MSC")=3250524.163302
+^DIC(165.8,"%MSC")=3260123.21403
 ^DIC(165.9,0)="ONCOLOGY EOD SCHEMAS^165.9"
 ^DIC(165.9,0,"AUDIT")="@"
 ^DIC(165.9,0,"DD")="@"
@@ -18541,7 +18541,7 @@ ZWR
 ^DIC(165.9,"%D",0)="^^2^2^3190308^"
 ^DIC(165.9,"%D",1,0)="This file contains the site-specific codes and descriptions for the"
 ^DIC(165.9,"%D",2,0)="SEER EOD (Extent of Disease) data items."
-^DIC(165.9,"%MSC")=3250524.163302
+^DIC(165.9,"%MSC")=3260123.21403
 ^DIC(166,0)="CASEFINDING SOURCE^166"
 ^DIC(166,0,"AUDIT")="@"
 ^DIC(166,0,"DD")="@"

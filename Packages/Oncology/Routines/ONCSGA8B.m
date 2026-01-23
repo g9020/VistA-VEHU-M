@@ -1,5 +1,5 @@
 ONCSGA8B ;HINES OIFO/RTK - AJCC 8th Ed Automatic Staging Tables ;01/15/19
- ;;2.2;ONCOLOGY;**10,12,13,18,20,21**;Jul 31, 2013;Build 6
+ ;;2.2;ONCOLOGY;**10,12,13,18,20,21,22**;Jul 31, 2013;Build 6
  ;
  ;
 30 ;NET DUODENUM AND AMPULLA OF VATER
@@ -69,6 +69,7 @@ ONCSGA8B ;HINES OIFO/RTK - AJCC 8th Ed Automatic Staging Tables ;01/15/19
  Q
 36 ;LUNG
  S M=$E(M,2,5)
+ I $P($G(^ONCO(165.5,D0,0)),"^",16)>3241231 D V369^ONCSGA8C Q
  I T="TX",N="N0",M="M0" S SG="OccultCarcinoma" Q
  I T="Tis",N="N0",M="M0" S SG=0 Q
  I T="T1mi",N="N0",M="M0" S SG="1A1" Q
@@ -107,6 +108,7 @@ ONCSGA8B ;HINES OIFO/RTK - AJCC 8th Ed Automatic Staging Tables ;01/15/19
  Q
 37 ;MALIGNANT PLEURAL MESOTHELIOMA
  S M=$E(M,2,5)
+ I $P($G(^ONCO(165.5,D0,0)),"^",16)>3241231 D V379^ONCSGA8C Q
  I T="T1",N="N0",M="M0" S SG="1A" Q
  I ((T="T2")!(T="T3")),N="N0",M="M0" S SG="1B" Q
  I T="T1",N="N1",M="M0" S SG=2 Q
@@ -144,7 +146,7 @@ ONCSGA8B ;HINES OIFO/RTK - AJCC 8th Ed Automatic Staging Tables ;01/15/19
  I T="T3",N="N0",M="M0",MTRT="L" S SG="1B" Q
  I T="T1",N="N0",M="M0",MTRT="H" S SG=2 Q
  I T="T2",N="N0",M="M0",MTRT="H" S SG=2 Q
- I T="T4",N="N0",M="M0",MTRT="L" S SG=3 Q
+ I T="T4",N="N0",M="M0",MTRT="L" S SG=2 Q
  I T="T3",N="N0",M="M0",MTRT="H" S SG="3A" Q
  I T="T4",N="N0",M="M0",MTRT="H" S SG="3B" Q
  I N="N1",M="M0" S SG=4 Q

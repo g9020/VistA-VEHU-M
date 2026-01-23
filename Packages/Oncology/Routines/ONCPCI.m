@@ -1,5 +1,5 @@
 ONCPCI ;HINES OIFO/GWB - Patient ID/Cancer ID screen display ;09/22/11
- ;;2.2;ONCOLOGY;**1,9,10,20,21**;Jul 31, 2013;Build 6
+ ;;2.2;ONCOLOGY;**1,9,10,20,21,22**;Jul 31, 2013;Build 6
  ;
 PI ;Patient Identification
  K DASH S $P(DASH,"-",80)="-"
@@ -53,8 +53,8 @@ CI ;Cancer Identification
  W !," Facility referred from.......: ",TXT1 W:TXT2'="" !,?32,TXT2
  S TXT=ONC(165.5,D0,7),LEN=46 D TXT
  W !," Facility referred to.........: ",TXT1 W:TXT2'="" !,?32,TXT2
- W !," Fee Basis....................: ",ONC(165.5,D0,237)
- I ONC(165.5,D0,237)="YES",$G(ONC(165.5,D0,237.1))'="" W " (",ONC(165.5,D0,237.1),")"
+ ;W !," Fee Basis....................: ",ONC(165.5,D0,237)
+ ;I ONC(165.5,D0,237)="YES",$G(ONC(165.5,D0,237.1))'="" W " (",ONC(165.5,D0,237.1),")"
  W !," Date of First Contact........: ",ONC(165.5,D0,155)
  W !," Date Dx......................: ",ONC(165.5,D0,3)
  I DATEDX>3091231 D
