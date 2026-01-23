@@ -1,5 +1,5 @@
 IBAMTS1 ;ALB/CPM - PROCESS NEW OUTPATIENT ENCOUNTERS ; 22-JUL-93
- ;;2.0;INTEGRATED BILLING;**20,52,132,153,166,156,167,247,339,614,760**;21-MAR-94;Build 25
+ ;;2.0;INTEGRATED BILLING;**20,52,132,153,166,156,167,247,339,614,760,817**;21-MAR-94;Build 2
  ;;Per VHA Directive 2004-038, this routine should not be modified.
  ;
 NEW ; Appointment fully processed - prepare a new charge.
@@ -27,6 +27,8 @@ NEW ; Appointment fully processed - prepare a new charge.
  ;
  ; - quit if the Pt is Visit Copay exempt based on HRfS flag  (IB*2.0*614)
  I $$CHKHRFS^IBAMTS3(DFN,IBDAT) G NEWQ
+ ;
+ I '$$CHKELIG(DFN) G NEWQ  ; quit if patient is exempt based on eligibility  IB*2.0*817
  ;
  S IBSL="409.68:"_IBOE
  ;
@@ -189,3 +191,14 @@ CHKPRIM ;  check to see if patient has been billed for primary
  S IBBILLED=0
  Q
  ;
+CHKELIG(DFN) ; check if patient eligibilities prevent billing  IB*2.0*817
+ ;
+ ; DFN - patient's DFN
+ ;
+ ; Reurns 1 if patient should be billed, 0 otherwise
+ N ELSTR,RES,VAEL,Z
+ S ELSTR="^WORLD WAR II^"
+ S RES=1
+ D ELIG^VADPT
+ S Z=0 F  S Z=$O(VAEL(1,Z)) Q:'Z  I ELSTR[(U_$P(VAEL(1,Z),U,2)_U) S RES=0 Q
+ Q RES

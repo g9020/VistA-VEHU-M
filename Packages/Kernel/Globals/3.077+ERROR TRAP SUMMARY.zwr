@@ -1,11 +1,7 @@
 OSEHRA ZGO Export: ERROR TRAP SUMMARY
 ZWR
-^%ZTER(3.077,0)="ERROR TRAP SUMMARY^3.077^2^2"
-^%ZTER(3.077,1,0)="TESTWS+5~PSS262PO, Expression expected but not found,150372778,-%YDB-E-EXPR^3250927.154135^3250927.154135"
+^%ZTER(3.077,0)="ERROR TRAP SUMMARY^3.077^1^1"
+^%ZTER(3.077,1,0)="LR582 : Application Error! please disregard NO need to report^3260123.151524^3260123.151524"
 ^%ZTER(3.077,1,4,0)="^3.0775"
-^%ZTER(3.077,1,4,67475,0)="~~~~~~~~~~~~~~~1"
-^%ZTER(3.077,2,0)="GETREST+4~XOBWLIB, Non-empty value assigned to $ECODE (user-defined error trap),150379506,-%YDB-E-SETECODE^3250927.155504^3250927.155504"
-^%ZTER(3.077,2,4,0)="^3.0775"
-^%ZTER(3.077,2,4,67475,0)="~~~~~~~~~~~~~~~1"
-^%ZTER(3.077,"B","GETREST+4~XOBWLIB, Non-empty v",2)=""
-^%ZTER(3.077,"B","TESTWS+5~PSS262PO, Expression ",1)=""
+^%ZTER(3.077,1,4,67593,0)="~~~~~~~~~~~~~~~1"
+^%ZTER(3.077,"B","LR582 : Application Error! ple",1)=""

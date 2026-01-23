@@ -1,5 +1,5 @@
 IBCNBAR ;ALB/ARH-Ins Buffer: process Accept and Reject ;15 Jan 2009
- ;;2.0;INTEGRATED BILLING;**82,240,345,413,416,497,528,554,595,631,687,737**;21-MAR-94;Build 19
+ ;;2.0;INTEGRATED BILLING;**82,240,345,413,416,497,528,554,595,631,687,737,806**;21-MAR-94;Build 19
  ;Per VA Directive 6402, this routine should not be modified.
  ;
  ;
@@ -131,7 +131,11 @@ CLEANUP ; general updates and checks done whenever insurance is added/edited and
  ;
 ACCPTQ Q
  ;
-REJECT(IBBUFDA) ; process a buffer entry reject
+REJECT(IBBUFDA,IBRTN) ; process a buffer entry reject  ;IB*806/CKB - added IBRTN
+ ;Input:
+ ; IBBUFDA - IEN of file #355.33 (Required)
+ ;   IBRTN - routine calling into REJECT, currently only IBJPI3 (Optional)
+ ;
  ;    1) update/notify IVM
  ;    2) buffer ins/group/policy data deleted
  ;    3) buffer entry status updated
@@ -140,6 +144,8 @@ REJECT(IBBUFDA) ; process a buffer entry reject
  N IBSUPRES,RESULT,RELHLD
  ;Set IBSUPRES to 0 to not suppress I/O within REJECT
  S IBSUPRES=0,RELHLD=0
+ ;IB*806/CKB - if called from IBJPI3 set IBSUPRES to 1 to suppress I/O
+ I $G(IBRTN)="IBJPI3" S IBSUPRES=1
  ;
 REJPROC ;Entry point for REJECAPI^IBCNICB (Patch 413)
  ;
@@ -248,7 +254,10 @@ TRACK ;Build CREATION TO PROCESSING TRACKING File (#355.36)
  . S SOI=$$GET1^DIQ(355.33,IBBUFDA_",",.03,"I")
  I WE=7 Q   ; Do not want to track.
  S FDA(355.36,"+1,",.01)=$$NOW^XLFDT ; DATE PROCESSED
- S FDA(355.36,"+1,",.02)=$S("^1^2^3^4^"[(U_WE_U):2,"^5^6^"[(U_WE_U):4,1:"") ;TYPE OF PROCESSING
+ ;IB*806/CKB - if IBTRN'="IBJPI3",maintain current functionality 
+ I $G(IBRTN)'="IBJPI3" S FDA(355.36,"+1,",.02)=$S("^1^2^3^4^"[(U_WE_U):2,"^5^6^"[(U_WE_U):4,1:"") ;TYPE OF PROCESSING
+ ;IB*806/CKB - if IBRTN="IBJPI3" this is the Auto Reject (No Touch) of Duplicate Buffer entries
+ I $G(IBRTN)="IBJPI3" S FDA(355.36,"+1,",.02)=$S("^5^6^"[(U_WE_U):3,"^1^2^"[(U_WE_U):1,1:"")      ;TYPE OF PROCESSING
  S FDA(355.36,"+1,",.03)=SOI ; SOURCE OF INFORMATION
  S FDA(355.36,"+1,",.04)=0 ; EIV AUTO-UPDATE (always 0 for No if it hits this code.)
  S FDA(355.36,"+1,",.05)=$G(TQN) ; EIV INQUIRY

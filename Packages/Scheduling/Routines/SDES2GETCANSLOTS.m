@@ -1,10 +1,11 @@
-SDES2GETCANSLOTS ;ALB/MGD,JAS,BLB,LAB - VISTA SCHEDULING RPCS GET CLINIC CANCELLED SLOTS ; May 2, 2025
- ;;5.3;Scheduling;**866,880,893,907**;Aug 13, 1993;Build 5
+SDES2GETCANSLOTS ;ALB/MGD,JAS,BLB,LAB,AGW - VISTA SCHEDULING RPCS GET CLINIC CANCELLED SLOTS ; July 30, 2025
+ ;;5.3;Scheduling;**866,880,893,907,918**;Aug 13, 1993;Build 4
  ;;Per VHA Directive 6402, this routine should not be modified
  ;
  ; External References
  ; -------------------
  ; Reference to $$FIND1^DIC in ICR #2051
+ ; *** The above reference will not be called but a call to $$GETRES^SDES2UTIL1 will done instead*** VSE-10427
  ; Reference to $$GET1^DIQ  in ICR #2056
  ;
  Q  ;No Direct Call
@@ -48,7 +49,7 @@ GETCANCSLOTS(JSONRETURN,SDCONTEXT,SDCANCDATA) ;
  Q
  ;
 VALIDATEINPUT(SDGETCANCSLOTS,SDCANCDATA,ERROR) ;validate input parameters
- N CLINICIEN,SDERR,EFLAG,SFLAG,SDESSTART,SDESENDDATE,SDVALERROR
+ N CLINICIEN,EFLAG,SFLAG,SDESSTART,SDESENDDATE,SDVALERROR
  S (SFLAG,EFLAG)=0
  ;validate CLINIC IEN
  S CLINICIEN=$G(SDCANCDATA("CLINICIEN"))
@@ -57,8 +58,11 @@ VALIDATEINPUT(SDGETCANCSLOTS,SDCANCDATA,ERROR) ;validate input parameters
  I +CLINICIEN>0 D  Q:ERROR
  . S SDCLNAME=$$GET1^DIQ(44,CLINICIEN_",",.01,"I")  ;retrieve the clinic name
  . I SDCLNAME="" D ERRLOG^SDESJSON(.SDGETCANCSLOTS,80) S ERROR=1 Q  ;clinic IEN not found
- . S SDCLRESIEN=$$FIND1^DIC(409.831,"","MX",SDCLNAME,"","","SDERR") ;retrieve the resource IEN for the clinic
- . I $D(SDERR) D ERRLOG^SDESJSON(.SDGETCANCSLOTS,70) S ERROR=1 Q  ;invalid clinic resource id
+ . ;
+ . ;AGW;VSE-100427; Call to GETRES^SDES2UTIL1 to get the resource IEN
+ . ;
+ . S SDCLRESIEN=$$GETRES^SDES2UTIL1(CLINICIEN,"") ;retrieve the resource IEN for the clinic
+ . I SDCLRESIEN="" D ERRLOG^SDESJSON(.SDGETCANCSLOTS,70) S ERROR=1 Q  ;invalid clinic resource id
  . S SDCANCDATA("SDCLRESIEN")=SDCLRESIEN
  ;
  ;validate start date

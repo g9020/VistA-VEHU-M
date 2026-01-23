@@ -1,5 +1,5 @@
 PSOSPMA3 ;BIRM/MFR - ASAP Definitions Listman Actions Handler ;11/11/15
- ;;7.0;OUTPATIENT PHARMACY;**451,625,772**;DEC 1997;Build 105
+ ;;7.0;OUTPATIENT PHARMACY;**451,625,772,797**;DEC 1997;Build 7
  ;
 SHOWHID ; Handles Show/Hide Details
  ; (PSOSHOW: 1: Show Segment Tree only; 2: Show Segments & Data Elements; 3: Show Data Element Details)
@@ -25,9 +25,7 @@ CV ; Loop Prompt
  I $D(VERS(Y_" ")) W !!?3,"ASAP Version '",Y,"' already exists.",$C(7) G CV
  S NEWASVER=Y
  S X="",DEFTYPE="B"
- I $G(VERS(PSOASVER_" "))="C"!$$CLONE^PSOSPML3(PSOASVER) D  I X="^" G BACK   ; 772 "standard clone" ASAP version
- . W ! S X=$$ASKFLD("Y","YES","Copy Customizations") I X="^" Q
- . S DEFTYPE=$S(X=1:"B",1:"S")
+ I $G(VERS(PSOASVER_" "))="C"!$$CLONE^PSOSPML3(PSOASVER) S DEFTYPE="B"  ; 772 "standard clone" ASAP version - always copy customizations into new copy
  W ! S X=$$ASKFLD("Y","NO","Confirm Copy") I X'=1 G BACK
  W ?40,"Copying..." D CLONEVER^PSOSPMU3(PSOASVER,NEWASVER,DEFTYPE) H 1 W "Done.",$C(7)   ; PSO*7*772
  S PSOASVER=NEWASVER
@@ -44,11 +42,15 @@ EDTDELIM ; Handles the 'Edit Delimiters' Action
  ; Data Element Delimiter
  S DONE=0,ELMDELIM=$P($G(ALLASAP),"^",2)
  F  S X=$$ASKFLD("58.4001,.02",ELMDELIM) Q:X="^"  D  I DONE Q
- . S ELMDELIM=$S(X="@":"",1:X) I X="@" W ?50,"Deleted." Q
+ . ;S ELMDELIM=$S(X="@":"",1:X) I X="@" W ?50,"Deleted." Q
+ . I X?1AN W ?40,"No letters or numbers allowed." Q
+ . S ELMDELIM=$S(X="@":ELMDELIM,1:X) I X="@" W ?50,"Deletion not allowed." Q
+ . I X="",ELMDELIM="" W ?40,"Data Element Delimiter is required" Q
  . S DONE=1
  ; Segment Terminator
  S DONE=0,SEGDELIM=$P($G(ALLASAP),"^",3)
  F  S X=$$ASKFLD("58.4001,.03",SEGDELIM) Q:X="^"  D  I DONE Q
+ . I X?1AN W ?40,"No letters or numbers allowed." Q
  . S SEGDELIM=$S(X="@":"",1:X) I X="@" W ?50,"Deleted." Q
  . S DONE=1
  I X="^" G BACK
@@ -222,12 +224,16 @@ CEE ; Error Re-Prompt
  . S MAXLEN=X
  . ; Data Element Requirement
  . S X=$$ASKFLD("58.400111,.06",$P($G(ALLASAP(SEGID,ELMPOS)),"^",6)) I X="^" Q
- . S ELMREQ=X
+ . S ELMREQ=X,$P(ELMDATA,"^",4)=ELMREQ
  . ; Data Element M Expression
  . S MEXPR="" F I=1:1 Q:'$D(ALLASAP(SEGID,ELMPOS,"VAL",I))  D
  . . S MEXPR=MEXPR_ALLASAP(SEGID,ELMPOS,"VAL",I)
  . S X=$$ASKMEXPR($P(ALLASAP(SEGID),"^",6),CUSELM,MAXLEN,MEXPR) I X="^" Q
  . S MEXPR=X
+ . I '$D(CUSASAP(SEGID,ELMPOS)),'$$ELMDIFF^PSOSPMU0($G(SEGID),$G(ELMPOS),.ELMDATA,MAXLEN,ELMREQ,MEXPR,.STDASAP) D  Q
+ . . W !!?5,"** No changes made, nothing saved. **"
+ . I $D(CUSASAP(SEGID,ELMPOS)),'$$ELMDIFF^PSOSPMU0($G(SEGID),$G(ELMPOS),.ELMDATA,MAXLEN,ELMREQ,MEXPR,.CUSASAP) D  Q
+ . . W !!?5,"** No changes made, nothing saved. **"
  . W ! S X=$$ASKFLD("Y","YES","Save Custom Data Element") I X'=1 Q
  . W ?40,"Saving..."
  . ; If first time the Data Element is being customized, copy; otherwise save
@@ -241,6 +247,12 @@ CEE ; Error Re-Prompt
  . . K STDASAP(SEGID,ELMPOS,"DES") M STDASAP(SEGID,ELMPOS,"DES")=ELMDATA("DES")
  . . D COPYELM^PSOSPMU3(PSOASVER,.STDASAP,PSOASVER,CUSELM)
  . I $D(CUSASAP(SEGID,ELMPOS)) D
+ . . I '$$ELMDIFF^PSOSPMU0($G(SEGID),$G(ELMPOS),.ELMDATA,MAXLEN,ELMREQ,MEXPR,.CUSASAP) D  Q
+ . . . W !!?5,"** No changes made, nothing saved. **"
+ . . I '$$ELMDIFF^PSOSPMU0($G(SEGID),$G(ELMPOS),.ELMDATA,MAXLEN,ELMREQ,MEXPR,.STDASAP) D  Q
+ . . . D DELCUS^PSOSPMU3(PSOASVER,SEGID,$P(ELMDATA,"^")) K CUSASAP(SEGID,ELMPOS)
+ . . . I '$O(CUSASAP(SEGID,"")),($G(CUSASAP(SEGID))=$G(STDASAP(SEGID))) D   ; No customized elements in this segment, no customizations in this segment, remove custom segment
+ . . . . D DELCUS^PSOSPMU3(PSOASVER,SEGID) K CUSASAP(SEGID)
  . . I $$CLONE^PSOSPML3(PSOASVER) D CUSTDEL^PSOSPMU2(PSOASVER,SEGID,ELMPOS,ELMDATA,.CUSASAP)   ; PSO*7*772
  . . S $P(CUSASAP(SEGID,ELMPOS),"^",4)=MAXLEN
  . . S $P(CUSASAP(SEGID,ELMPOS),"^",6)=ELMREQ
@@ -314,19 +326,7 @@ ASKMEXPR(LEVEL,ELMID,MAXLEN,DEFAULT) ; Prompt for M SET Expression
  ;       (r) MAXLEN  - Element ID value Maximum Length
  ;       (o) DEFAULT - Default value
  ;Output: M SET Expression or "^"
- N ASKMEXPR,DONE,ERROR
- S DONE=0,X=$G(DEFAULT)
- F  D  I DONE Q
- . S X=$G(DEFAULT) W !,"M SET EXPRESSION: "_$S(X'="":X_"// ",1:"")
- . R X:DTIME S:X="" X=$G(DEFAULT) I '$T!(X="^") S ASKMEXPR="^",DONE=1 Q
- . I X["?" W ! D MEXPRHLP^PSOSPML3(LEVEL,ELMID) W ! Q
- . I '$$VALID^PSOSPMU3(PSOASVER,X) W !,$P($$VALID^PSOSPMU3(PSOASVER,X),"^",2),$C(7),! Q
- . I '$$CHKVAR^PSOSPMU3(LEVEL,X) Q
- . D CHKCODE^PSOSPMU3(LEVEL,X,.ERROR) I ERROR Q
- . I $E(X,1)="""",$E(X,$L(X))="""",$E(X,2,$L(X)-1)'["""",$L(X)-2>MAXLEN D  Q
- . . W !,"The length cannot be longer than the maximum (",MAXLEN,").",$C(7),!
- . S ASKMEXPR=X,DONE=1
- Q ASKMEXPR
+ Q $$ASKMEXPR^PSOSPMU0(LEVEL,ELMID,MAXLEN,DEFAULT)
  ;
 SECKEY() ; Checking the Security Key PSO SPMP ADMIN for certain actions
  I '$D(^XUSEC("PSO SPMP ADMIN",DUZ)) S VALMSG="PSO SPMP ADMIN key required for this action!" W $C(7) Q 0

@@ -1,5 +1,5 @@
-SDECAR2 ;ALB/SAT/JSM,WTC,LAB,JAS,LAB/JAS,TJB - VISTA SCHEDULING RPCS ; JUNE 20, 2025
- ;;5.3;Scheduling;**627,642,658,671,686,694,745,799,805,820,823,893,895,915**;Aug 13, 1993;Build 2
+SDECAR2 ;ALB/SAT/JSM,WTC,LAB,JAS,LAB/JAS,TJB,AGW - VISTA SCHEDULING RPCS ; JULY 31, 2025
+ ;;5.3;Scheduling;**627,642,658,671,686,694,745,799,805,820,823,893,895,915,918**;Aug 13, 1993;Build 4
  ;;Per VHA Directive 6402, this routine should not be modified
  ;
  Q
@@ -19,14 +19,14 @@ ARSET(RET,INP) ;Appt Req Set
  ;  INP(10) = (text)     Provider name  - NAME field in NEW PERSON file200
  ;  INP(11) = (date)     Desired Date of appointment in external format.
  ;  INP(12) = (text)     comment must be 1-60 characters.
- ;  INP(13) = (text)     ENROLLMENT PRIORITY - Valid Values:  GROUP 1-8
- ;  INP(14) = (text)     MULTIPLE APPOINTMENT RTC      NO; YES
+ ;  INP(13) = (text)     ENROLLMENT PRIORITY - Valid Values: GROUP 1-8
+ ;  INP(14) = (text)     MULTIPLE APPOINTMENT RTC  NO; YES
  ;  INP(15) = (integer)  MULT APPT RTC INTERVAL integer between 1-365
  ;  INP(16) = (integer)  MULT APPT NUMBER integer between 1-100
  ;  INP(17) = Patient Contacts separated by ::
  ;  Each :: piece has the following ~~ pieces:
- ;  1) = (date)    DATE ENTERED external date/time
- ;  2) = (text)    PC ENTERED BY USER ID or NAME - Pointer toNEW PERSON file or NAME
+ ;  1) = (date)  DATE ENTERED external date/time
+ ;  2) = (text)  PC ENTERED BY USER ID or NAME - Pointer toNEW PERSON file or NAME
  ;  4) = (optional) ACTION - valid values are: CALLED;MESSAGE LEFT;LETTER
  ;  5) = (optional) PATIENT PHONE Free-Text 4-20 characters
  ;  6) = NOT USED (optional) Comment 1-160 characters
@@ -60,7 +60,8 @@ ARSET(RET,INP) ;Appt Req Set
  I '+DFN S RET=RET_"-1^Invalid Patient ID."_$C(30,31) Q
  I '$D(^DPT(DFN,0)) S RET=RET_"-1^Invalid Patient ID"_$C(30,31) Q
  S AREDT=$P($G(INP(3)),":",1,2)
- S AREDT=$$NETTOFM^SDECDATE(AREDT,$S(AREDT["@":"Y",1:"N")) ;
+ S:AREDT'="" AREDT=$$NETTOFM^SDECDATE(AREDT,$S(AREDT["@":"Y",1:"N")) ;
+ S:AREDT="" AREDT=$$NOW^XLFDT
  I AREDT=-1 S RET=RET_"-1^Invalid Origination date."_$C(30,31) Q
  S ARORIGDT=$P(AREDT,".",1)
  S ARINST=$G(INP(4)) I ARINST'="" D
@@ -327,7 +328,7 @@ AR435(SDDT,ARIEN) ;
  F SDI=1:1:$L(SDDT,"|") D
  .S %DT="" S X=$P($P(SDDT,"|",SDI),"@",1) D ^%DT S SDJ=Y
  .Q:SDJ=-1
- .Q:$O(^SDEC(409.85,ARIEN,5,"B",SDJ,0))   ;don't add duplicates
+ .Q:$O(^SDEC(409.85,ARIEN,5,"B",SDJ,0))
  .S SDFDA(409.851,"+1,"_ARIEN_",",.01)=SDJ
  .D UPDATE^DIE("","SDFDA")
  Q

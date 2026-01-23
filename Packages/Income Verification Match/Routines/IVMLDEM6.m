@@ -1,5 +1,5 @@
 IVMLDEM6 ;ALB/KCL,BRM,PHH,CKN,LBD,SJD,KUM - IVM DEMOGRAPHIC UPLOAD FILE ADDRESS ;09/02/19 8:24pm
- ;;2.0;INCOME VERIFICATION MATCH;**10,58,73,79,108,106,105,124,115,152,164,177,188,212,216**;21-OCT-94;Build 7
+ ;;2.0;INCOME VERIFICATION MATCH;**10,58,73,79,108,106,105,124,115,152,164,177,188,212,216,217**;21-OCT-94;Build 3
  ;;Per VHA Directive 10-93-142, this routine should not be modified.
  ;
  ;
@@ -144,7 +144,9 @@ UPLOAD(DFN,IVMFIELD,IVMVALUE) ; - file address fields received from IVM
  ; - update specified address field in the Patient (#2) file
  N DIE,DA,DR,IENS,FDA,IVMZCT
  ; IVM*2.0*216 - Remove Cell phone using FileMan API
- I (IVMFIELD=.134),((IVMVALUE="")!(IVMVALUE="@")) D  Q
+ ; IVM*2.0*217 - Remove Conf phone using FileMan API
+ ;I (IVMFIELD=.134),((IVMVALUE="")!(IVMVALUE="@")) D  Q
+ I ((IVMFIELD=.134)!(IVMFIELD=.1315)),((IVMVALUE="")!(IVMVALUE="@")) D  Q
  .S IENS=DFN_","
  .S FDA(2,IENS,IVMFIELD)="@"
  .D FILE^DIE("","FDA")

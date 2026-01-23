@@ -1,5 +1,5 @@
 PSOSPMU2 ;BIRM/MFR - State Prescription Monitoring Program Utility #2 - Prompts ;10/07/15
- ;;7.0;OUTPATIENT PHARMACY;**451,625,772**;DEC 1997;Build 105
+ ;;7.0;OUTPATIENT PHARMACY;**451,625,772,797**;DEC 1997;Build 7
  ;
 ASAPVER(DEFTYPE,REGZERO,DSPHLP,DEFAULT,REQUIRED,ALLOWDEL) ; Prompt for the ASAP Version
  ; Input: (r) DEFTYPE - ASAP Definition Type (S: Standard Only; C: Customized Only, F: Fully Customized Only,
@@ -185,6 +185,10 @@ STDSEGCU(PSOASVER,STDASAP,CUSASAP,ALLASAP,CUSSEG) ; Customize Standard Segment -
  . S $P(TMPASAP(CUSSEG),"^",6)=X,DONE=1
   I X="^" Q
  ;
+ ; Has anything changed? If not, quit, don't save
+ I $G(TMPASAP(CUSSEG))=$G(ALLASAP(CUSSEG)) D  Q
+ . W !!?5,"** No changes made, nothing saved. **"
+ ; 
  ; Confirm
  W ! S X=$$ASKFLD^PSOSPMA3("Y","YES","Save Custom Segment") I X'=1 Q
  W ?40,"Saving..."
@@ -194,5 +198,7 @@ STDSEGCU(PSOASVER,STDASAP,CUSASAP,ALLASAP,CUSSEG) ; Customize Standard Segment -
  . D COPYSEG^PSOSPMU3(PSOASVER,.STDASAP,PSOASVER,CUSSEG)
  E  D
  . D SAVESEG^PSOSPMU3(PSOASVER,CUSSEG,TMPASAP(CUSSEG),ALLASAP)
+ . ; If the segment been modified back to its original values AND there are no customized data elements in the segment, remove the segment from ,2 node of 58.4
+ . I ($G(TMPASAP(CUSSEG))=$G(STDASAP(CUSSEG))),'$O(CUSASAP(CUSSEG,0)) D DELCUS^PSOSPMU3(PSOASVER,CUSSEG)
  W "OK",$C(7)
  Q

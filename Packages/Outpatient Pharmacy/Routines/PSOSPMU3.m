@@ -1,5 +1,5 @@
 PSOSPMU3 ;BIRM/MFR - State Prescription Monitoring Program Utility #3 - Customization ;10/07/15
- ;;7.0;OUTPATIENT PHARMACY;**451,625,772**;DEC 1997;Build 105
+ ;;7.0;OUTPATIENT PHARMACY;**451,625,772,797**;DEC 1997;Build 7
  ;
 CLONEVER(FROMVER,NEWVER,DEFTYPE) ; Create an exact copy of another ASAP version 
  ;Input: (r) FROMVER - Source ASAP Version to be cloned (3.0, 4.0, 4.1, 4.2)
@@ -211,9 +211,7 @@ DELCUS(ASAPVER,SEGID,ELMID,DELSTDV) ; Delete/Reset a Customization
  I $G(ELMID)'="",'$G(ELMIEN) Q
  ;
  ; Deleting/Resetting a Custom Data Element
- I $G(ELMID)'="" D  Q
- . S DIK="^PS(58.4,"_CUSIEN_",""VER"","_VERIEN_",""SEG"","_SEGIEN_",""DAT"","
- . S DA(3)=CUSIEN,DA(2)=VERIEN,DA(1)=SEGIEN,DA=ELMIEN D ^DIK
+ I $G(ELMID)'="" D RESETELM^PSOSPMU0(CUSIEN,VERIEN,SEGIEN,SEGID,ELMIEN,ELMID,ELMPOS,.CUSASAP,.STDASAP) Q
  ;
  ; Deleting/Resetting an Entire Custom Segment
  I $G(SEGID)'="" D  Q

@@ -1,5 +1,5 @@
 PSOSPMU0 ;BIRM/MFR - State Prescription Monitoring Program - Load ASAP Definition Utility ;10/07/12
- ;;7.0;OUTPATIENT PHARMACY;**451,625,772**;DEC 1997;Build 105
+ ;;7.0;OUTPATIENT PHARMACY;**451,625,772,797**;DEC 1997;Build 7
  ;
 LOADASAP(VERSION,DEFTYPE,ASARRAY) ; Loads the ASAP definition array for the specific Version
  ; Input: (r) VERSION - ASAP Version (3.0, 4.0, 4.1, 4.2)
@@ -159,3 +159,69 @@ VERSIONLOCKED(VERSEL) ; PSO*7*772
  . . . I +$$GET1^DIQ(58.4001,PSOVERIEN_","_PSOASIEN,.07,"I") S RETURN=1
  Q RETURN
  ;
+RESETELM(CUSIEN,VERIEN,SEGIEN,SEGID,ELMIEN,ELMID,ELMPOS,CUSASAP,STDASAP) ; Reset (Remove Customizations from) Data Element
+ ; CUSIEN- IEN of the CUSTOM record name from the SPMP ASAP RECORD DEFINITIONS file (#58.4)
+ ; VERIEN - IEN of the ASAP version from the VERSION sub-file (#58.4001) of the SPMP ASAP RECORD DEFINITIONS file (#58.4)
+ ; SEGIEN -  IEN of the segment from the SEGMENT sub-file (#58.40011) of the VERSION sub-file of the SPMP ASAP RECORD DEFINITIONS file (#58.4)
+ ; SEGID - NAME (#.01) field value of the segment in the SEGMENT sub-file (#58.40011) of the VERSION sub-file of the SPMP ASAP RECORD DEFINITIONS file (#58.4)
+ ; ELMIEN - IEN of the element from the DATA ELEMENT sub-file (#58.400111) of the SEGMENT sub-file (#58.40011) of the VERSION sub-file of the SPMP ASAP RECORD DEFINITIONS file (#58.4)
+ ; ELMID - NAME (#.01) field value of the element in the DATA ELEMENT sub-file (#58.400111) of the SEGMENT sub-file (#58.40011) of the VERSION sub-file of the SPMP ASAP RECORD DEFINITIONS file (#58.4)
+ ; ELMPOS - Position of the Data Element within the segment 
+ ; CUSASAP - Array of customizations from the CUSTOM ASAP DEFINITION node of the SPMP ASAP RECORD DEFINITIONS file (#58.4).
+ ; STDASAP - Array of non-customized ASAP definition from the STANDARD ASAP DEFINITION node of the SPMP ASAP RECORD DEFINITIONS file (#58.4).
+ ;
+ N DIK,DA
+ S DIK="^PS(58.4,"_CUSIEN_",""VER"","_VERIEN_",""SEG"","_SEGIEN_",""DAT"","
+ S DA(3)=CUSIEN,DA(2)=VERIEN,DA(1)=SEGIEN,DA=ELMIEN D ^DIK I $G(ELMPOS) I $P($G(CUSASAP(SEGID,ELMPOS)),"^")=ELMID K CUSASAP(SEGID,ELMPOS)
+ I '$O(CUSASAP(SEGID,"")),($G(CUSASAP(SEGID))=$G(STDASAP(SEGID))) D   ; No customized elements in this segment, no customizations in this segment, remove custom segment
+ . S DIK="^PS(58.4,"_CUSIEN_",""VER"","_VERIEN_",""SEG"","
+ . S DA(2)=CUSIEN,DA(1)=VERIEN,DA=SEGIEN D ^DIK
+ . K CUSASAP(SEGID)
+ Q
+ ;
+ELMDIFF(SEGID,ELMPOS,ELMDATA,EDEMAXL,EDEREQ,MEXPR,ASAPAR) ; Compare NEW and OLD arrays
+ N EDENAME,EDEFMT,EDESLINE,EDESDIFF,ASAPLINE
+ I '$L($G(SEGID)) Q 1
+ I '$L($G(ELMPOS)) Q 1
+ I '$L($G(ELMDATA)) Q 1
+ S EDENAME=$P(ELMDATA,"^",2),EDEFMT=$P(ELMDATA,"^",3)
+ I $G(EDENAME)'=$P(ASAPAR(SEGID,ELMPOS),"^",2) Q 1  ; Element name was changed
+ I $G(EDEFMT)'=$P(ASAPAR(SEGID,ELMPOS),"^",3) Q 1   ; Data format was changed
+ I $G(EDEMAXL)'=$P(ASAPAR(SEGID,ELMPOS),"^",4) Q 1  ; Max length was changed
+ I $G(EDEREQ)'=$P(ASAPAR(SEGID,ELMPOS),"^",6) Q 1   ; Requirement was changed
+ I $G(MEXPR)'=$G(ASAPAR(SEGID,ELMPOS,"VAL",1)) Q 1  ; (Return) Value was changed 
+ ;
+ ; Number of lines of edited Description text
+ S EDESLINE="" S EDESLINE=$O(ELMDATA("DES",EDESLINE),-1)
+ ;
+ ; Number of lines of comparison array Description text
+ S ASAPLINE="" S ASAPLINE=$O(ASAPAR(SEGID,ELMPOS,"DES",ASAPLINE),-1)
+ ;
+ ; Number of lines of Description text has changed, that's a change
+ I ASAPLINE'=EDESLINE Q 1
+ ;
+ ; If same number of lines in Description, check for changes
+ S EDESLINE=0 F  S EDESLINE=$O(ELMDATA("DES",EDESLINE)) Q:'EDESLINE!$G(EDESDIFF)  D
+ . I ELMDATA("DES",EDESLINE)'=$G(ASAPAR(SEGID,ELMPOS,"DES",+$G(EDESLINE))) S EDESDIFF=1
+ Q:$G(EDESDIFF) 1  ; Description has changed
+ Q 0   ; Nothing has changed
+ ;
+ASKMEXPR(LEVEL,ELMID,MAXLEN,DEFAULT) ; Prompt for M SET Expression
+ ;Input: (r) LEVEL   - Level of the Segment where the Data Element is located
+ ;       (r) ELMID   - Data Element ID ("PHA01", "DSP02", etc.)
+ ;       (r) MAXLEN  - Element ID value Maximum Length
+ ;       (o) DEFAULT - Default value
+ ;Output: M SET Expression or "^"
+ N ASKMEXPR,DONE,ERROR
+ S DONE=0,X=$G(DEFAULT)
+ F  D  I DONE Q
+ . S X=$G(DEFAULT) W !,"M SET EXPRESSION: "_$S(X'="":X_"// ",1:"")
+ . R X:DTIME S:X="" X=$G(DEFAULT) I '$T!(X="^") S ASKMEXPR="^",DONE=1 Q
+ . I X["?" W ! D MEXPRHLP^PSOSPML3(LEVEL,ELMID) W ! Q
+ . I '$$VALID^PSOSPMU3(PSOASVER,X) W !,$P($$VALID^PSOSPMU3(PSOASVER,X),"^",2),$C(7),! Q
+ . I '$$CHKVAR^PSOSPMU3(LEVEL,X) Q
+ . D CHKCODE^PSOSPMU3(LEVEL,X,.ERROR) I ERROR Q
+ . I $E(X,1)="""",$E(X,$L(X))="""",$E(X,2,$L(X)-1)'["""",$L(X)-2>MAXLEN D  Q
+ . . W !,"The length cannot be longer than the maximum (",MAXLEN,").",$C(7),!
+ . S ASKMEXPR=X,DONE=1
+ Q ASKMEXPR

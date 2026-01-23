@@ -1,5 +1,5 @@
 IBCNBLA ;ALB/ARH - Ins Buffer: LM action calls ;1 Jun 97
- ;;2.0;INTEGRATED BILLING;**82,149,153,184,271,416,506,601,737**;21-MAR-94;Build 19
+ ;;2.0;INTEGRATED BILLING;**82,149,153,184,271,416,506,601,737,806**;21-MAR-94;Build 19
  ;;Per VA Directive 6402, this routine should not be modified.
  ;
 NEWSCRN(TEMPLAT,TMPARR,IBBUFDA) ; open a new screen for a specific buffer entry, pass in LM template and the array to select from
@@ -141,7 +141,10 @@ SELSORT ;  select the way to sort the list screen
  W !,"Select the item to sort the buffer records on the buffer list screen."
  ; IB*2*737/DTG remove verify action reference
  ; S DIR(0)="SO^1:Patient Name;2:Insurance Company;3:Source of Information;4:Date Entered;5:Inpatients;6:Means Test;7:On Hold;8:Verified;9:eIV Status;10:Positive Response"
- S DIR(0)="SO^1:Patient Name;2:Insurance Company;3:Source of Information;4:Date Entered;5:Inpatients;6:Means Test;7:On Hold;8:eIV Status;9:Positive Response"
+ ;IB*806/DTG add 'P' potential new policy to sort
+ ;S DIR(0)="SO^1:Patient Name;2:Insurance Company;3:Source of Information;4:Date Entered;5:Inpatients;6:Means Test;7:On Hold;8:eIV Status;9:Positive Response"
+ S DIR(0)="SO^1:Patient Name;2:Insurance Company;3:Source of Information;4:Date Entered;"
+ S DIR(0)=DIR(0)_"5:Inpatients;6:Means Test;7:On Hold;8:eIV Status;9:Positive Response;10:Potential new policy"
  S DIR("A")="Sort the list by",DIR("B")=$P($G(IBCNSORT),"^",2)
  D ^DIR K DIR
  I 'Y G SELSORTX
@@ -224,3 +227,29 @@ AMCHK ; This procedure is called from the main buffer screen as an action
 AMCHKX ;
  Q
  ;
+ ;IB*806/DTG start check the subscriber id for new pt policy
+SUBCLNCK(IBSDFN,IBBUFSN) ; Look at subscriber ids in 2.312 and compare for 'P' ;IB*806/DTG check subscriber id equals
+ ;Input:
+ ; IBSDFN   - patient DFN
+ ; IBBUFSN  - 355.33 buffer IEN
+ ;Output:
+ ;  'P' - new potential policy, if no sub id's, from file #2.312, match the one from file 355.33
+ ;
+ N IB90,IBA,IBB,IBC,IBD,IBE,IBF,IBI,IBIENS,IBO,IBOUT,IBSUBCLN
+ S IBSDFN=+$G(IBSDFN) I IBSDFN="" Q ""  ; must have PT DFN
+ S IBBUFSN=+$G(IBBUFSN)
+ I 'IBBUFSN Q ""  ; must have 355.33 IEN
+ ;
+ ; get subscriber id from 355.33
+ D  I 'IBO Q ""  ; must have a cleaned subscriber id
+ . S IBO="",IB90=$G(^IBA(355.33,IBBUFSN,90)),IBE=$P(IB90,U,3) I IBE="" Q  ; no subscriber id in 355.33
+ . S IBF=$$STRIP^IBCNEDE3(IBE) I IBF="" Q  ; no clean subscriber id in 355.33
+ . S IBO=1,IBSUBCLN=IBF
+ ;
+ S IBD="P",IBA=0,IBOUT=0 F  S IBA=$O(^DPT(IBSDFN,.312,IBA)) Q:'IBA  D  Q:IBOUT
+ . S IBIENS=IBA_","_IBSDFN_","
+ . S IBB=$$GET1^DIQ(2.312,IBIENS,7.02) I IBB="" Q
+ . S IBC=$$STRIP^IBCNEDE3(IBB) I IBC="" Q  ; remove all non alpha numeric from subscriber id
+ . I IBC=IBSUBCLN S IBD="",IBOUT=1
+ Q IBD
+ ;IB*806/DTG end check the subscriber id for new pt policy
