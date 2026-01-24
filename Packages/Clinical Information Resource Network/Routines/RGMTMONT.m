@@ -1,5 +1,5 @@
 RGMTMONT ;BIR/CML,PTD-MPI/PD Monitor HL7 Messaging/Filers and Setups ;6/25/20  15:14
- ;;1.0;CLINICAL INFO RESOURCE NETWORK;**20,30,31,34,75,78**;30 Apr 99;Build 1
+ ;;1.0;CLINICAL INFO RESOURCE NETWORK;**20,30,31,34,75,78,79**;30 Apr 99;Build 1
  ;
  ;Reference to PROTOCOL (#101) file supported by IA #5567
  ;Reference to OPTION (#19) file supported by IA #10075
@@ -12,6 +12,8 @@ RGMTMONT ;BIR/CML,PTD-MPI/PD Monitor HL7 Messaging/Filers and Setups ;6/25/20  1
  ;              supported by IA #2097 and #2602.
  ;Reference to ^XTV(8933.1 supported by IA #7177
  ;Reference to ^XTV(8989.3 supported by IA #7183
+ ;Reference to ^HLCS(869.3,1,2 [INCOMING FILER TASK NUMBER : Field 20..01] supported by IA #7572
+ ;Reference to ^%ZTSK( [User : Field #3] supported by IA #7573
  ;
 EN1 ;Call this routine from the top to do extended checks that include:
  ;- D HLMA1^RGMTUT98
@@ -217,6 +219,16 @@ CHK6 ;
  I RGEN="" S TXT="=> No RG QUEUE resource device"
  I RGEN>0 S TXT="=> RG QUEUE, SLOTS AVAILABLE: "_$P(^%ZISL(3.54,RGEN,0),"^",2)
  D TXT
+ ;
+ ;**79 VAMPI-31617 (jfw) - Monitor Incoming HL7 Filers
+CHKFLRS ;Check Incoming HL7 Filers to see if started by POSTMASTER
+ N RGI,RGTSK,RGNP,RGFCNT
+ S (RGFCNT,RGI)=0 F  S RGI=$O(^HLCS(869.3,1,2,RGI)) Q:'+RGI  D  ;IA #7572
+ .S RGTSK=$P($G(^HLCS(869.3,1,2,RGI,0)),"^")
+ .S RGNP=$$GET1^DIQ(200,$P($G(^%ZTSK(RGTSK,0)),"^",3)_",",.01)  ;IA #7573/10060
+ .D:($$UP^XLFSTR($$TRIM^XLFSTR(RGNP))="POSTMASTER")  ;IA #10104 
+ ..S RGFCNT=RGFCNT+1
+ ..S ^XTMP("RGMT","HLMQMONT",LOCSITE,"FILER",RGFCNT)="=> INCOMING HL7 FILER TASK ("_RGTSK_") started by POSTMASTER"
  ;
 FLDLIST ;capture fields being audited
  I $D(RGHLMQ) D
