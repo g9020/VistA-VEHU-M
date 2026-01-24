@@ -1,5 +1,5 @@
 RCDPENR2 ;ALB/SAB - EPay National Reports - ERA/EFT Trending Report ; 7/1/19 2:02pm
- ;;4.5;Accounts Receivable;**304,321,326,349,432,446**;Mar 20, 1995;Build 15
+ ;;4.5;Accounts Receivable;**304,321,326,349,432,446,450**;Mar 20, 1995;Build 15
  ;;Per VA Directive 6402, this routine should not be modified.
  ;
  ;Read ^DGCR(399) via Private IA 3820
@@ -77,6 +77,8 @@ EFTERA()  ;  EFT/ERA TRENDING REPORT
  Q
  ;
 AUTO(RCDISP,RCBGDT,RCENDDT,RCPYRLST,RCRQDIV,RCRPT,RCEXCEL,RCRATE,RCDIV,RCAUTO,RCPUZ) ;
+ ;*NOTE* $G is needed for param, Called from AR Nightly Process. AUTO^RCDPENR2
+ ;
  ; Inputs: RCAUTO (Optional) - A - Auto-Post, N-Non-Auto-Post, B-Both (Defaults to B)
  ;         RCDISP - Display results to screen or archive file flag
  ;         RCBGDT - begin date of the report
@@ -94,6 +96,8 @@ AUTO(RCDISP,RCBGDT,RCENDDT,RCPYRLST,RCRQDIV,RCRPT,RCEXCEL,RCRATE,RCDIV,RCAUTO,RC
  ;
  ;Select output device
  W !
+ I $G(RCPUZ)="" S RCPUZ="A"         ; PRCA*4.5*450
+ I $G(RCSORT)="" S RCSORT="P"       ; PRCA*4.5*450
  I $G(RCAUTO)="" S RCAUTO="B"       ; PRCA*4.5*349
  I $G(RCCLM)="" S RCCLM="A"         ; PRCA*4.5*349
  I $G(RCPAY)="" S RCPAY="A"         ; PRCA*4.5*349

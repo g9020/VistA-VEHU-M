@@ -1,8 +1,9 @@
 BPSOSRX4 ;ALB/SS - ECME REQUESTS ;04-JAN-08
- ;;1.0;E CLAIMS MGMT ENGINE;**7,8,10,11,40**;JUN 2004;Build 25
+ ;;1.0;E CLAIMS MGMT ENGINE;**7,8,10,11,40,41**;JUN 2004;Build 11
  ;;Per VA Directive 6402, this routine should not be modified.
  ;
  Q
+ ;
  ;restore MOREDATA from the file 9002313.77
 READMORE(BPIEN77,MOREDATA) ;
  N BPIEN772,BPCOB,BPIEN78,BPACTTYP,BPDURCNT,BPPAYSEQ
@@ -42,6 +43,8 @@ READMORE(BPIEN77,MOREDATA) ;
  I $L($P($G(^BPS(9002313.77,BPIEN77,2)),U,8))>0 S $P(MOREDATA("BPSAUTH"),U,2)=$P($G(^BPS(9002313.77,BPIEN77,2)),U,8) ;preauth number
  I $L($P($G(^BPS(9002313.77,BPIEN77,2)),U,10))>0 S MOREDATA("BPSDELAY")=$P($G(^BPS(9002313.77,BPIEN77,2)),U,10) ;Delay Reason Code
  I $L($P($G(^BPS(9002313.77,BPIEN77,2)),U,11))>0 S MOREDATA("BPSDX")=$$GET1^DIQ(9002313.77,BPIEN77_",",2.11,"E") ; Diagnosis code
+ I $L($P($G(^BPS(9002313.77,BPIEN77,2)),U,12))>0 S MOREDATA("BPSPREG")=$$GET1^DIQ(9002313.77,BPIEN77_",",2.12,"E") ; Pregnancy Indicator
+ ;
  ;DUR override codes Reason for Service Code, Professional Service Code, Result of Service Code
  ;
  S MOREDATA("RTYPE")=$P($G(^BPS(9002313.77,BPIEN77,1)),U,8)

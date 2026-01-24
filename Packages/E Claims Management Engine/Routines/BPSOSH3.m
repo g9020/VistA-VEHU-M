@@ -1,5 +1,5 @@
 BPSOSH3 ;AITC/MRD - Clinical Segment ;03/06/2025
- ;;1.0;E CLAIMS MGMT ENGINE;**40**;JUN 2004;Build 25
+ ;;1.0;E CLAIMS MGMT ENGINE;**40,41**;JUN 2004;Build 11
  ;;Per VA Directive 6402, this routine should not be modified.
  ;
  Q
@@ -9,7 +9,8 @@ DXFIELDS ; Conditionally populate Diagnosis related fields.
  ; There will be a diagnosis (Dx) code only if:
  ;   o The OPECC performed the RED Resubmit with Edits Action from
  ;     the ECME User Screen.
- ;   o The Pharmacist performed the DIA Action from the Work List.
+ ;   o The Pharmacist performed the DIA Action from the Reject
+ ;     Information Screen.
  ;   o The previous claim had a Dx code due to one of those reasons.
  ;
  N CLAIM,COB,DXCODE,FIELDIEN,FILL,IEN57,IEN59,RXIEN
@@ -88,7 +89,8 @@ CLINICAL ; Conditionally create the Clinical Segment.
  ; There will be a diagnosis (Dx) code only if:
  ;   o The OPECC performed the RED Resubmit with Edits Action from
  ;     the ECME User Screen.
- ;   o The Pharmacist performed the DIA Action from the Work List.
+ ;   o The Pharmacist performed the DIA Action from the Reject
+ ;     Information Screen.
  ;   o The previous claim had a Dx code due to one of those reasons.
  ; SEGREC is initiated in XLOOP^BPSOSH2.
  ;
@@ -118,6 +120,46 @@ CLINICAL ; Conditionally create the Clinical Segment.
  S SEGREC=SEGREC_$C(28)_DXCODE
  ;
  S DATAFND=1
+ ;
+ Q
+ ;
+PREG ; Conditionally populate the field Pregnancy Indicator.
+ ;
+ ; There will be a pregnancy indicator only if the Pharmacist performed
+ ; the PRG Action from the Reject Information Screen or the previous
+ ; claim had this field populated.
+ ;
+ N CLAIM,FIELDIEN,IEN57,IEN59,PREG,RXIEN
+ ;
+ ; NCPDP field 335, Pregnancy Indicator.
+ ;
+ S FIELDIEN=$O(^BPSF(9002313.91,"B",335,""))
+ ;
+ ; First, pull the pregnancy indicator from the list of override fields.
+ ;
+ S PREG=$G(BPS("OVERRIDE",FIELDIEN))
+ ;
+ ; If no pregnancy indicator was found in the list of override fields,
+ ; then check the most recent previous claim, if any.
+ ;
+ I PREG="" D
+ . S IEN59=+$G(BPS("RX",1,"IEN59"))
+ . I IEN59="" Q
+ . S IEN57=$O(^BPSTL("B",IEN59,""),-1)
+ . I IEN57="" Q
+ . S CLAIM=$$GET1^DIQ(9002313.57,IEN57,3,"I")
+ . I CLAIM="" Q
+ . S PREG=$TR($E($$GET1^DIQ(9002313.02,CLAIM,335),3)," ")
+ . Q
+ ;
+ ; Quit if no value found.
+ ;
+ I PREG="" Q
+ ;
+ ; NCPDP field 335, Pregnancy Indicator.
+ ;
+ S BPS("Patient","Pregnancy Indicator")=PREG
+ D XFLDCODE^BPSOSCF(110,FIELDIEN,"GFS")
  ;
  Q
  ;

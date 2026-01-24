@@ -1,5 +1,5 @@
-SDLT ;ALB/LDB,GXT,TJB - CANCELLATION LETTERS ;14 JUL 2025
- ;;5.3;Scheduling;**185,213,281,330,398,523,441,555,622,641,680,705,917**;Aug 13, 1993;Build 2
+SDLT ;ALB/LDB,GXT,TJB,TJB - CANCELLATION LETTERS ;OCT 20 2025
+ ;;5.3;Scheduling;**185,213,281,330,398,523,441,555,622,641,680,705,917,922**;Aug 13, 1993;Build 7
  ;;Per VHA Directive 6402, this routine should not be modified
  ;
  ;**************************************************************************
@@ -107,8 +107,12 @@ ADDR K VAHOW S DFN=+A W !?12,$$FML^DGNFUNC(DFN)
  ;
 LAST4(DFN) ;Return patient "last four"
  N SDX
+ S SDX="     " Q SDX
+ ;
  S SDX=$G(^DPT(+DFN,0))
- Q $E(SDX)_$E($P(SDX,U,9),6,9)
+ ;Q $E(SDX)_$E($P(SDX,U,9),6,9)
+ S SDX="     "
+ Q SDX
  ;
 BADADD ;Print patients with a Bad Address Indicator
  I '$D(^TMP($J,"BADADD")) Q

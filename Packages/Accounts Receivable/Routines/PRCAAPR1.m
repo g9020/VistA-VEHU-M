@@ -1,5 +1,5 @@
 PRCAAPR1 ;WASH-ISC@ALTOONA,PA/RGY - PATIENT ACCOUNT PROFILE ;2/12/97  11:48 AM
- ;;4.5;Accounts Receivable;**34,45,108,143,141,206,192,218,276,275,284,303,301,315,350,343,404,405,406,448**;Mar 20, 1995;Build 3
+ ;;4.5;Accounts Receivable;**34,45,108,143,141,206,192,218,276,275,284,303,301,315,350,343,404,405,406,448,459**;Mar 20, 1995;Build 6
  ;;Per VA Directive 6402, this routine should not be modified.
  ;
  ;PRCA*4.5*343 Ensure displayed phone number has format 111-222-3333
@@ -214,3 +214,19 @@ GETSA(DFN) ; get SC/SA codes  PRCA*4.5*448
  .I $$GET1^DIQ(2,DFN,.322013,"I")="Y" S RES=RES_"SWA, "  ; sw asia
  .Q
  Q $S(RES'="":$E(RES,1,$L(RES)-2),1:"None")
+ ;
+GETDFN(DBIEN) ; Get the DFN for the patient / Debtor ; PRCA*4.5*459
+ N TEMP
+ I '$D(^RCD(340,DBIEN,0)) Q ""
+ S TEMP=$P(^RCD(340,DBIEN,0),U)
+ I $P(TEMP,";",2)'["DPT" Q ""
+ Q +TEMP
+ ;
+SVCINFO ; print Service connected % and SA list ; PRCA*4.5*459
+ N X,C,Y,DFN,SC
+ S X=$G(^PRCA(430,D0,0)),Y=$P(X,U,9),DFN=$$GETDFN(Y) S:'DFN DFN=$P(X,U,7)
+ S C=$P(^DD(430,9,0),U,2) D Y^DIQ:Y
+ S SC=$$GETSC^PRCAAPR1(DFN)
+ W !,?0,"SC(%): ",$S(SC>-1:SC,1:"NA"),?39,"SA: ",$$GETSA^PRCAAPR1(DFN)
+ ;W !,?0,"SC(%): ",$$GETSC^PRCAAPR1(DFN),?39,"SA: ",$$GETSA^PRCAAPR1(DFN)
+ ;

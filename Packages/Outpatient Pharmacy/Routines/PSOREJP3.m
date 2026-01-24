@@ -1,5 +1,5 @@
 PSOREJP3 ;ALB/SS - Third Party Reject Display Screen - Comments ;10/27/06
- ;;7.0;OUTPATIENT PHARMACY;**260,287,289,290,358,359,385,403,421,427,448,482,512,528,544,766**;DEC 1997;Build 25
+ ;;7.0;OUTPATIENT PHARMACY;**260,287,289,290,358,359,385,403,421,427,448,482,512,528,544,766,767**;DEC 1997;Build 11
  ; Reference to GETDAT^BPSBUTL in ICR #4719
  ; Reference to COM^BPSSCRU3 in ICR #6214
  ; Reference to IEN59^BPSOSRX in ICR #4412
@@ -272,15 +272,15 @@ PRINT(RX,RFL) ; Print Label for specific Rx/Fill
  I '$G(RX) Q
  I $G(RFL)="" Q
  ;
- ; Some of these variables are used by LBL^PSOLSET but they are newed here
- N PPL,PSOSITE,PSOPAR,PSOSYS,PSOBARS,PSOBAR0,PSOBAR1,PSOIOS,PSOBFLAG,PSOCLBL
- N PSOQUIT,PSOPIOST,PSOLTEST,PSOTLBL,PSORXT
+ ; Some of these variables are used by LBL^PSOLSET but are Newed here.
+ N PPL,PSOSITE,PSOPAR,PSOSYS,PSOBARS,PSOBAR0,PSOBAR1,PSOIOS,PSOBFLAG
+ N PSOCLBL,PSOQUIT,PSOPIOST,PSOLTEST,PSOTLBL,PSORXT
  N DFN,PDUZ,RXFL,REPRINT,REJLBL,DIR,X,Y,DTOUT,DUOUT,DIRUT,DIROUT
  N %ZIS,IOP,POP,ZTSK,ZTRTN,ZTIO,ZTDESC,ZTSAVE,ZTDTH,VAR
  ;
- ; Set the default label printer.  We need to new it so we don't change the value that was
- ;   set by PSOLSET when the user first logged into OP so need to do a bit of work to new it and  
- ;   reset it before the call to LBL^PSOLSET.
+ ; Set the default label printer.  To prevent disrupting the value
+ ; set by PSOLSET when the user first logged into Outpatient Pharmacy,
+ ; it is Newed here and reset it before the call to LBL^PSOLSET.
  I $G(PSOLAP)]"" S PSOTLBL=PSOLAP N PSOLAP S PSOLAP=PSOTLBL,PSOCLBL=1
  E  N PSOLAP S PSOCLBL=""
  ;
@@ -355,7 +355,7 @@ FILL ;Fill payable TRICARE or CHAMPVA Rx
  S COM=""
  I 'PSOTRIC&($$STATUS^PSOBPSUT(RX,FILL)'["PAYABLE") S VALMSG="Only Rxs with an E PAYABLE status may be filled.",VALMBCK="R" Q
  I PSOTRIC&($$STATUS^PSOBPSUT(RX,FILL)'["PAYABLE") D FILLTR I $L($G(VALMSG)_$G(VALMBCK)) Q
- S:COM="" COM="AUTOMATICALLY CLOSED"
+ I COM="" S COM="AUTOMATICALLY CLOSED"
  S (OPNREJ,OPNREJ2,OPNREJ3)=""
  S OPNREJ2=0 F  S OPNREJ2=$O(^PSRX(RX,"REJ",OPNREJ2)) Q:OPNREJ2=""!(OPNREJ2'?1N.N)  S OPNREJ=OPNREJ_","_OPNREJ2
  S OPNREJ=$E(OPNREJ,2,999),OPNREJ2=""
@@ -429,13 +429,14 @@ TRIREJCD ;TRICARE or CHAMPVA Reject Code, non-billable Rx
  ;;eT,eC;;TRICARE or CHAMPVA pseudo reject codes referenced in ^PSOREJP3, ^PSOREJU4
  Q
  ;
-SEND(OVRCOD,CLA,PA,PSOET,DIAG) ; - Sends Claim to ECME and closes Reject
+SEND(OVRCOD,CLA,PA,PSOET,DIAG,PREG) ; - Sends Claim to ECME and closes Reject
  ; Input:  OVRCOD - Up to three ~-pieces, and each populated would be
  ;              Reason for Service Code ^ Prof Srvc Cd ^ Result of Srvc Cd
  ;         CLA - Submission Clarification Code #1 ~ SCC #2 ~ SCC #3 
  ;         PA - Prior Auth Type ^ Prior Auth Number 
  ;         PSOET - 1 if eT/eC pseudo-reject on claim
  ;         DIAG - Diagnosis Code
+ ;         PREG - Pregnancy Indicator
  N ALTXT,COM,DIR,PSO59,PSOCOB,PSOETEC,PSOPLAN,PSORTYPE,RESP,SMA
  N DIWF,DIWL,DIWR,X
  S DIR(0)="Y",DIR("A")="     Confirm",DIR("B")="YES"
@@ -454,6 +455,9 @@ SEND(OVRCOD,CLA,PA,PSOET,DIAG) ; - Sends Claim to ECME and closes Reject
  . I $G(DIAG)'="" D
  . . I DIAG="REMOVED" S ALTXT=ALTXT_"-(DIAGNOSIS CODE REMOVED)"
  . . E  S ALTXT=ALTXT_"-(DIAGNOSIS CODE="_DIAG_")"
+ . I $G(PREG)'="" D
+ . . S ALTXT=ALTXT_"-(PREGNANCY INDICATOR="
+ . . S ALTXT=ALTXT_$S(PREG=1:"NOT ",1:"")_"PREGNANT)"
  ;
  S PSOCOB=$$PSOCOB^PSOREJP3(RX,FILL,REJ)
  S PSO59=$$IEN59^BPSOSRX(RX,FILL,PSOCOB)
@@ -463,7 +467,7 @@ SEND(OVRCOD,CLA,PA,PSOET,DIAG) ; - Sends Claim to ECME and closes Reject
  S PSOETEC=""
  I ($D(^PSRX(RX,"REJ","B","eT")))!($D(^PSRX(RX,"REJ","B","eC"))) S PSOETEC=1
  ;
- D ECMESND^PSOBPSU1(RX,FILL,,$S($G(PSOET):"RSNB",1:"ED"),$$GETNDC^PSONDCUT(RX,FILL),,,$G(OVRCOD),,.RESP,,ALTXT,$G(CLA),$G(PA),PSOCOB,,PSOPLAN,PSORTYPE,$G(DIAG))
+ D ECMESND^PSOBPSU1(RX,FILL,,$S($G(PSOET):"RSNB",1:"ED"),$$GETNDC^PSONDCUT(RX,FILL),,,$G(OVRCOD),,.RESP,,ALTXT,$G(CLA),$G(PA),PSOCOB,,PSOPLAN,PSORTYPE,$G(DIAG),$G(PREG))
  ;If PSOETEC=1 RESP will exist because its a Non-Billable Rx, do not Quit continue processing
  I PSOETEC'=1 I $G(RESP) D  Q
  . W !!?10,"Claim could not be submitted. Please try again later!"

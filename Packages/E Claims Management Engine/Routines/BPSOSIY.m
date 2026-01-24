@@ -1,5 +1,5 @@
 BPSOSIY ;BHAM ISC/FCS/DRS/DLF - Updating BPS Transaction record ;11/7/07  17:29
- ;;1.0;E CLAIMS MGMT ENGINE;**1,3,5,6,7,8,10,11,20,26,29,36,40**;JUN 2004;Build 25
+ ;;1.0;E CLAIMS MGMT ENGINE;**1,3,5,6,7,8,10,11,20,26,29,36,40,41**;JUN 2004;Build 11
  ;;Per VA Directive 6402, this routine should not be modified.
  ;
  Q
@@ -39,12 +39,16 @@ INIT(IEN59,BP77,BPSNB) ;EP - from BPSOSIZ
  . S RXR=+$E($P(IEN59,".",2),1,4)
  . S DIV=$$GETDIV^BPSOSQC(RXI,RXR)
  ;
- ; If there are Prior Auth or Sub Clar Code override, create override
- ; record.  Note that setting of MOREDATA("BPOVRIEN") in this routine
- ; will not conflict with prior setting of this value of BPOVRIEN
- ; since BPOVRIEN and BPSAUTH/BPSCLARF are mutually exclusive.
- ; Diagnosis code will also result in an override record being created.
- I $G(MOREDATA("BPSAUTH"))]""!($G(MOREDATA("BPSCLARF"))]"")!($G(MOREDATA("BPSDELAY"))]"")!($G(MOREDATA("BPSDX"))]"") S MOREDATA("BPOVRIEN")=$$OVERRIDE(IEN59)
+ ; Create an override record if one of these values exists:
+ ;   o Prior Authorization Code/Number
+ ;   o Submission Clarification Code(s)
+ ;   o Delay Reason Code
+ ;   o Diagnosis Code
+ ;   o Pregnancy Indicator
+ ; Note that setting of MOREDATA("BPOVRIEN") in this routine will not
+ ; conflict with prior setting of this value of BPOVRIEN since BPOVRIEN
+ ; and BPSAUTH/BPSCLARF are mutually exclusive.
+ I $G(MOREDATA("BPSAUTH"))]""!($G(MOREDATA("BPSCLARF"))]"")!($G(MOREDATA("BPSDELAY"))]"")!($G(MOREDATA("BPSDX"))]"")!($G(MOREDATA("BPSPREG"))]"") S MOREDATA("BPOVRIEN")=$$OVERRIDE(IEN59)
  ;
  ; Set BPSDATA into local variable
  S B1=$G(MOREDATA("BPSDATA",1))
@@ -255,6 +259,11 @@ OVERRIDE(IEN59) ;
  I $G(MOREDATA("BPSDX"))]"" D
  . S BPSFLD=$O(^BPSF(9002313.91,"B",424,""))
  . I BPSFLD]"" S BPSFDA(9002313.5111,"+6,+1,",.01)=BPSFLD,BPSFDA(9002313.5111,"+6,+1,",.02)=MOREDATA("BPSDX")
+ ;
+ ; Pregnancy Indicator
+ I $G(MOREDATA("BPSPREG"))]"" D
+ . S BPSFLD=$O(^BPSF(9002313.91,"B",335,""))
+ . I BPSFLD]"" S BPSFDA(9002313.5111,"+7,+1,",.01)=BPSFLD,BPSFDA(9002313.5111,"+7,+1,",.02)=MOREDATA("BPSPREG")
  ;
  ; Create the record
  D UPDATE^DIE("","BPSFDA","BPOVRIEN","BPSMSG")

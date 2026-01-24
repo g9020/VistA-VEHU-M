@@ -1,5 +1,5 @@
 BPSOSCF ;BHAM ISC/FCS/DRS/DLF - Low-level format of .02 ;06/01/2004
- ;;1.0;E CLAIMS MGMT ENGINE;**1,5,8,10,15,19,23,28,40**;JUN 2004;Build 25
+ ;;1.0;E CLAIMS MGMT ENGINE;**1,5,8,10,15,19,23,28,40,41**;JUN 2004;Build 11
  ;;Per VA Directive 6402, this routine should not be modified.
  ;
  ; 100  (Transaction Header Segment)
@@ -25,7 +25,7 @@ BPSOSCF ;BHAM ISC/FCS/DRS/DLF - Low-level format of .02 ;06/01/2004
  ; 300  (Last Known 4Rx Segment)
  ;
  ; FORMAT = IEN to file #9002313.92, BPS NCPDP FORMATS
- ; NODE = Segment Node (e.g. 100, 110)
+ ; NODE = A specific segment node (e.g. 100, 110)
  ; MEDN = Transaction multiple in BPS Claims
 XLOOP(FORMAT,NODE,MEDN) ; format claim record
  ;
@@ -33,7 +33,8 @@ XLOOP(FORMAT,NODE,MEDN) ; format claim record
  I $G(FORMAT)="" Q
  I $G(NODE)="" Q
  ;
- N FLAG,FLDIEN,FLDINFO,IEN511,IEN59,MDATA,NCPVERS,NODEIEN,ORDER,OVERRIDE,PMODE,RECMIEN,BPSX
+ N FLAG,FLDIEN,FLDINFO,IEN511,IEN59,MDATA,NCPVERS,NODEIEN,ORDER
+ N OVERRIDE,PMODE,RECMIEN,BPSX
  ;
  ; quit If the payer sheet doesn't have the segment
  I NODE'=230,'$D(^BPSF(9002313.92,FORMAT,NODE,0)) Q
@@ -62,12 +63,12 @@ XLOOP(FORMAT,NODE,MEDN) ; format claim record
  S ORDER=0
  F  S ORDER=$O(^BPSF(9002313.92,FORMAT,NODE,"B",ORDER)) Q:'ORDER  D
  . ;
- . ; Get the pointer to the BPS NCPDP FIELD DEFS table
+ . ; Set MDATA to the record from file 9002313.92, BPS NCPDP FORMATS.
  . S RECMIEN=$O(^BPSF(9002313.92,FORMAT,NODE,"B",ORDER,0))
  . I 'RECMIEN D IMPOSS^BPSOSUE("DB","TI","NODE="_NODE,"ORDER="_ORDER,2,$T(+0)) Q
  . S MDATA=^BPSF(9002313.92,FORMAT,NODE,RECMIEN,0)
  . ;
- . ; Corrupt or erroneous format file
+ . ; Get the pointer to the BPS NCPDP FIELD DEFS table
  . S FLDIEN=$P(MDATA,U,2)
  . I 'FLDIEN Q
  . ;
@@ -106,6 +107,11 @@ XLOOP(FORMAT,NODE,MEDN) ; format claim record
  . ; Call XFLDCODE to do processing based on FLAG setting
  . D XFLDCODE(NODE,FLDIEN,FLAG)
  ;
+ ; If the current segment is 110/Patient, conditionally populate
+ ; field 335-2C PREGNANCY INDICATOR.
+ ;
+ I NODE=110 D PREG^BPSOSH3
+ ;
  ; If the current segment is 130/Claim, populate field 460-ET
  ; QUANTITY PRESCRIBED if it's not already populated.
  ;
@@ -116,10 +122,11 @@ XLOOP(FORMAT,NODE,MEDN) ; format claim record
  . D XFLDCODE(NODE,FLDIEN,"GFS")
  . Q
  ; 
- ; The user has the ability, via the action RED / Resubmit with
- ; Edits, to add to the claim fields not on the payer sheet.
- ; Any fields to be added to the claim are stored in the file
- ; BPS NCPDP OVERRIDE.
+ ; The user has the ability to add to the claim fields not on the payer
+ ; sheet.  This is done via the action RED/Resubmit with Edits on the
+ ; ECME User Screen or via the action ECS/Edit Claim Submitted on the
+ ; Reject Information Screen.  Any fields to be added to the claim are
+ ; stored in the file BPS NCPDP OVERRIDE.
  ;
  ; Determine the transaction from the claim.  Determine
  ; override, and Quit if none.  Field 1.13 is NCPDP OVERRIDES,
@@ -142,7 +149,7 @@ XLOOP(FORMAT,NODE,MEDN) ; format claim record
  ;
  Q
  ;
- ; Execute Get, Format and/or Set MUMPS code for NCPDP Field
+ ; Execute Get, Format, and/or Set MUMPS code for NCPDP Field
  ;
  ; Parameters:   NODE    -  Segment Node
  ;               FLDIEN  -  NCPDP Field Definitions IEN

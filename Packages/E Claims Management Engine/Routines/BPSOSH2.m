@@ -1,5 +1,5 @@
 BPSOSH2 ;BHAM ISC/SD/LWJ/DLF - Assemble formatted claim ;06/01/2004
- ;;1.0;E CLAIMS MGMT ENGINE;**1,5,8,10,15,19,20,23,28,40**;JUN 2004;Build 25
+ ;;1.0;E CLAIMS MGMT ENGINE;**1,5,8,10,15,19,20,23,28,40,41**;JUN 2004;Build 11
  ;;Per VA Directive 6402, this routine should not be modified.
  ;
  ;    5.1 had 14 claim segments (Header, Patient, Insurance, Claim
@@ -27,9 +27,11 @@ BPSOSH2 ;BHAM ISC/SD/LWJ/DLF - Assemble formatted claim ;06/01/2004
  ;        segment record will hold the data until we are sure
  ;        we have something to send
  ;
- ; Put together ASCII formatted record per the Payer Sheet Definition
- ; Input:  
- ;   NODES - "100^110^120" or "130^140^150^160^170^180^190^200^210^220^230^240^250^260^270^280^290^300"
+ ; Put together ASCII formatted record per the Payer Sheet Definition.
+ ; Called only by ASCII^BPSECA1.
+ ; Input:
+ ;   NODES - A string of one or more segment IDs, delimited with "^".
+ ;     Will be either "100^110^120" or "130^140^150^ ... ^280^290^300"
  ; Passed by Ref:
  ;  .IEN - Internal Entry Number array
  ;  .BPS - Formatted Data Array with claim and transaction data
@@ -125,6 +127,17 @@ XLOOP(NODES,IEN,BPS,REC) ;EP - from BPSECA1
  . . ;
  . . I NODE=100 S SEGREC=SEGREC_FLDDATA  ;no FS on the header rec
  . . I NODE>100 S SEGREC=SEGREC_$C(28)_FLDDATA  ;FS always proceeds fld
+ . ;
+ . ; If the current segment is 110/Patient (B1 - Billing Requests only), 
+ . ; add field 335-2C PREGNANCY INDICATOR if data exists and it's not 
+ . ; already populated.
+ . ;
+ . I NODE=110,TYPE="B1" D
+ . . ; Check to see if 335-2C already added to segment.
+ . . I SEGREC[($C(28)_"2C") Q
+ . . S FLDDATA=BPS(9002313.02,IEN(9002313.02),335,"I")
+ . . I FLDDATA'="" S SEGREC=SEGREC_$C(28)_FLDDATA
+ . . Q
  . ;
  . ; If the current segment is 130/Claim (B1 - Billing Requests only), 
  . ; add field 460-ET QUANTITY PRESCRIBED if data exists and it's not 

@@ -786,7 +786,7 @@ ZWR
 ^DIC(2,"%D",14,0)="in the file you will note that many are preceeded by an asterisk."
 ^DIC(2,"%D",15,0)="Those fields are scheduled to be removed from the file due to either"
 ^DIC(2,"%D",16,0)="lack of use or replacement by another field/file in the next release."
-^DIC(2,"%MSC")=3260123.152322
+^DIC(2,"%MSC")=3260124.071052
 ^DIC(3.05,0)="FAILED ACCESS ATTEMPTS LOG^3.05"
 ^DIC(3.05,0,"GL")="^%ZUA(3.05,"
 ^DIC(3.05,0,"GL")="^%ZUA(3.05,"
@@ -2322,7 +2322,7 @@ ZWR
 ^DIC(27.11,"%D",2,0)="not be added, edited, or deleted except through the use of the enrollment"
 ^DIC(27.11,"%D",3,0)="software that is part of Registration.  Doing so would likely cause the"
 ^DIC(27.11,"%D",4,0)="enrollment database to become corrupted."
-^DIC(27.11,"%MSC")=3250725.134119
+^DIC(27.11,"%MSC")=3260124.071053
 ^DIC(27.12,0)="ENROLLMENT QUERY LOG^27.12"
 ^DIC(27.12,0,"GL")="^DGEN(27.12,"
 ^DIC(27.12,0,"GL")="^DGEN(27.12,"
@@ -7729,7 +7729,7 @@ ZWR
 ^DIC(69.9,"%D",4,0)="be entered when ordering and/or accessioning tests, what type of accession"
 ^DIC(69.9,"%D",5,0)="label format (if any) the lab will be using, and scheduled hours of routine"
 ^DIC(69.9,"%D",6,0)="phlebotomy collection times, as well as others."
-^DIC(69.9,"%MSC")=3170221.165745
+^DIC(69.9,"%MSC")=3260124.071342
 ^DIC(69.91,0)="LR ROUTINE INTEGRITY CHECKER^69.91I"
 ^DIC(69.91,0,"GL")="^LAB(69.91,"
 ^DIC(69.91,0,"GL")="^LAB(69.91,"
@@ -20637,7 +20637,7 @@ ZWR
 ^DIC(342,"%D",2,0)="functionality of the AR package."
 ^DIC(342,"%D",3,0)=""
 ^DIC(342,"%D",4,0)="Per VHA Directive 10-93-142, this file definition should not be modified."
-^DIC(342,"%MSC")=3230819.185508
+^DIC(342,"%MSC")=3260124.071206
 ^DIC(342.1,0)="AR GROUP^342.1I"
 ^DIC(342.1,0,"GL")="^RC(342.1,"
 ^DIC(342.1,0,"GL")="^RC(342.1,"
@@ -20700,7 +20700,7 @@ ZWR
 ^DIC(344,"%D",8,0)="package options."
 ^DIC(344,"%D",9,0)=" "
 ^DIC(344,"%D",10,0)="Per VHA Directive 10-93-142, this file definition should not be modified."
-^DIC(344,"%MSC")=3241122.152552
+^DIC(344,"%MSC")=3260124.071206
 ^DIC(344.1,0)="AR DEPOSIT^344.1I"
 ^DIC(344.1,0,"GL")="^RCY(344.1,"
 ^DIC(344.1,0,"GL")="^RCY(344.1,"
@@ -20895,7 +20895,7 @@ ZWR
 ^DIC(344.74,0,"LAYGO")="@"
 ^DIC(344.74,0,"RD")="@"
 ^DIC(344.74,0,"WR")="@"
-^DIC(344.74,"%MSC")=3220612.135746
+^DIC(344.74,"%MSC")=3260124.071206
 ^DIC(344.9,0)="RCDPE DM REPORT PARAMETERS^344.9"
 ^DIC(344.9,0,"AUDIT")="@"
 ^DIC(344.9,0,"DD")="@"
@@ -22751,7 +22751,7 @@ ZWR
 ^DIC(355.3,"%D",6,0)="Insurance Plan."
 ^DIC(355.3,"%D",7,0)=" "
 ^DIC(355.3,"%D",8,0)="Per VHA Directive 10-93-142, this file definition should not be modified."
-^DIC(355.3,"%MSC")=3230311.174522
+^DIC(355.3,"%MSC")=3260124.07112
 ^DIC(355.31,0)="PLAN LIMITATION CATEGORY^355.31I"
 ^DIC(355.31,0,"GL")="^IBE(355.31,"
 ^DIC(355.31,0,"GL")="^IBE(355.31,"
@@ -57930,7 +57930,7 @@ ZWR
 ^DIC(9002313.77,"%D",7,0)="user."
 ^DIC(9002313.77,"%D",8,0)=" "
 ^DIC(9002313.77,"%D",9,0)="Per VHA Directive 2004-038, this file definition should not be modified."
-^DIC(9002313.77,"%MSC")=3250927.15544
+^DIC(9002313.77,"%MSC")=3260124.07112
 ^DIC(9002313.78,0)="BPS INSURER DATA^9002313.78"
 ^DIC(9002313.78,0,"AUDIT")="@"
 ^DIC(9002313.78,0,"DD")="@"
@@ -58048,7 +58048,7 @@ ZWR
 ^DIC(9002313.91,"%D",2,0)="packets."
 ^DIC(9002313.91,"%D",3,0)=" "
 ^DIC(9002313.91,"%D",4,0)="Per VHA Directive 2004-038, this file definition should not be modified."
-^DIC(9002313.91,"%MSC")=3220918.134901
+^DIC(9002313.91,"%MSC")=3260124.07112
 ^DIC(9002313.92,0)="BPS NCPDP FORMATS^9002313.92"
 ^DIC(9002313.92,0,"AUDIT")="@"
 ^DIC(9002313.92,0,"DD")="@"

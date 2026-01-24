@@ -1,5 +1,5 @@
-SDESUTIL ;ALB/TAW,KML,LAB,MGD,ANU,MGD,ANU,BWF,TJB,MCB,MCB - SDES Utilities ;Feb. 21,2025
- ;;5.3;Scheduling;**801,804,805,814,816,818,820,823,824,825,831,836,838,845,851,877,878,887,897,910**;Aug 13, 1993;Build 3
+SDESUTIL ;ALB/TAW,KML,LAB,MGD,ANU,MGD,ANU,BWF,TJB,MCB,MCB,TAW- SDES Utilities ;Oct 03,2025
+ ;;5.3;Scheduling;**801,804,805,814,816,818,820,823,824,825,831,836,838,845,851,877,878,887,897,910,920**;Aug 13, 1993;Build 7
  ;;Per VHA Directive 6402, this routine should not be modified
  ;
  ; Reference to INSTITUTION in #2251
@@ -51,7 +51,7 @@ ISDATEDST(DATE,DSTSUM) ;Does this date use Daylight Savings
  I '$$VALIDFMFORMAT^SDECDATE(DATE) Q -1
  S YR=$E(DATE,2,3)
  I DATE<$$DSTSTART(YR,DSTSUM) Q 0
- I DATE>$$DSTEND(YR,DSTSUM) Q 0
+ I DATE>=$$DSTEND(YR,DSTSUM) Q 0
  Q 1
 DSTSTART(YR,DSTSUM) ;Daylight Savings or Summer start date
  ; countries that observe DST or Summer ST (e.g., USA observes DST and Europe observes SUM ST)

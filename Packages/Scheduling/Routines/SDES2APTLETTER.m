@@ -1,5 +1,5 @@
-SDES2APTLETTER ;ALB/TJB,TJB,TJB,MCB,JHC - VISTA SCHEDULING RPCS - LETTER PRINT ; Mar 12, 2025
- ;;5.3;Scheduling;**895,898,899,901,903**;Aug 13, 1993;Build 3
+SDES2APTLETTER ;ALB/TJB,TJB,TJB,MCB,JHC,TJB - VISTA SCHEDULING RPCS - LETTER PRINT ; OCT 20, 2025
+ ;;5.3;Scheduling;**895,898,899,901,903,922**;Aug 13, 1993;Build 7
  ;;Per VHA Directive 6402, this routine should not be modified
  ;
  ; Reference to DIVISION in ICR #7024
@@ -11,6 +11,7 @@ SDES2APTLETTER ;ALB/TJB,TJB,TJB,MCB,JHC - VISTA SCHEDULING RPCS - LETTER PRINT ;
  ; SDINPUT("Letter Type")=Letter type - "N"=No Show; "P"=Pre-Appointment; "A"=Cancelled by Patient; "C"=Cancelled by Clinic
 PRINTLETTER(RESULTS,SDCONTEXT,SDINPUT) ;
  N APPTLIST,APPTIEN,ERRORS,GBL,LETTERS,LINE,LCNT,LETIEN,LTYPE
+ N %H,%,%T,%Y ; To clear leaking variables from called routines
  S APPTIEN=$G(SDINPUT("Appointment IEN")),LTYPE=$G(SDINPUT("Letter Type"))
  ; validate context array
  D VALCONTEXT^SDES2VALCONTEXT(.ERRORS,.SDCONTEXT)
@@ -32,6 +33,7 @@ PRINTLETTER(RESULTS,SDCONTEXT,SDINPUT) ;
  ; SDINPUT("Letter Type")=Letter type - "N"=No Show; "P"=Pre-Appointment; "A"=Cancelled by Patient; "C"=Cancelled by Clinic
 PRINTLETTERS(RESULTS,SDCONTEXT,SDINPUT) ;
  N APPTIEN,ERRORS,LETIEN,LCNT,GBL,LETTERS,LINE,LTYPE,ERRAPT,ECNT
+ N %H,%,%T,%Y ; To clear leaking variables from called routines
  ; validate context array
  D VALCONTEXT^SDES2VALCONTEXT(.ERRORS,.SDCONTEXT)
  I $D(ERRORS) S ERRORS("letters",1)="" D BUILDJSON^SDES2JSON(.RESULTS,.ERRORS) Q
@@ -267,7 +269,9 @@ FILL(PADS,CHAR)  ;pad string
  F I=1:1:PADS S RET=RET_CHAR
  Q RET
 LILAST4(DFN) ;Retrieve the first letter of the last name and append last 4 SSN of a patient
- N LAST4SSN,LASTIN
+ N LAST4SSN,LASTIN,OUT
+ S OUT="     " Q OUT
+ ;
  S LASTIN=$E($$GET1^DIQ(2,DFN_",",.01,"E"),1,1)
  S LAST4SSN=$$GET1^DIQ(2,DFN_",",.09,"E")
  I LAST4SSN["P" S LAST4SSN=$E(LAST4SSN,6,10) Q LASTIN_LAST4SSN

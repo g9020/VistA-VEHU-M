@@ -1,5 +1,5 @@
 RCDPRPL3 ;WISC/RFJ-receipt profile listmanager options ;1 Jun 99
- ;;4.5;Accounts Receivable;**114,148,153,173,301,326,367,371,409,424,446**;Mar 20, 1995;Build 15
+ ;;4.5;Accounts Receivable;**114,148,153,173,301,326,367,371,409,424,446,450**;Mar 20, 1995;Build 15
  ;;Per VA Directive 6402, this routine should not be modified.
  Q
  ;
@@ -81,7 +81,7 @@ PROCESS ;  option: process receipt
  ;
  S RCQUIT=0
  I RCERA,'RCEFT D  Q:RCQUIT
- . I $P($G(^RCY(344.4,+RCERA,0)),U,5)'=RCAMT D  S RCQUIT=1 Q
+ . I +$P($G(^RCY(344.4,+RCERA,0)),U,5)'=RCAMT D  S RCQUIT=1 Q
  . . W !,"This receipt cannot be processed because the total amount of the associated"
  . . W !," ERA ("_$J(+$P($G(^RCY(344.4,+RCERA,0)),U,5),"",2)_") does not equal the total amount on the receipt ("_$J(RCAMT,"",2)_")"
  . . S VALMSG="Receipt total not = ERA total - Receipt NOT processed"
@@ -246,6 +246,8 @@ PROCESS ;  option: process receipt
  ;
  ; Process receipt, pass 1 to show messages
  D PROCESS^RCDPURE1(RCRECTDA,1) K CSRECPT
+ W !!,"Processing Receipt for First Party Auto Decrease",!
+ D OFFSET^RCDPEAD5(RCRECTDA) ; PRCA*4.5*450 Process 1st Party Auto Decrease
  D UNLOCK
  D INIT^RCDPRPLM
  D HDR^RCDPRPLM
