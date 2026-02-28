@@ -1,5 +1,5 @@
 PSORENW1 ;BIR/DSD - Renew Main Driver Continuation ;Dec 07, 2021@08:44:31
- ;;7.0;OUTPATIENT PHARMACY;**20,37,51,46,71,117,157,143,219,239,225,444,548,587,441,753,770**;DEC 1997;Build 145
+ ;;7.0;OUTPATIENT PHARMACY;**20,37,51,46,71,117,157,143,219,239,225,444,548,587,441,753,770,795**;DEC 1997;Build 5
  ;External reference ^VA(200 supported by DBIA 10060
  ;
 START ;
@@ -51,7 +51,8 @@ STOP ; Calculating Expiration Date for the Renewal
  N NUMREFS K PSEXDT,X,%DT
  S PSON52("QFLG")=0,DAYS=$S($G(PSORENW("DAYS SUPPLY")):PSORENW("DAYS SUPPLY"),1:$P(PSORENW("RX0"),"^",8))
  ; If this is an eRx Renewal Response, retrieve the eRx # of refills, which could be different from the Original Order
- S NUMREFS=$P(PSORENW("RX0"),"^",9) I $G(ERXIEN),$$GET1^DIQ(52.49,ERXIEN,.08,"I")="RE",$$GET1^DIQ(52.49,ERXIEN,5.6) D
+ ;PS0*7.0*795 Adjusted line below to retrieve correct MUMPS variable for "number of refills" on a prescription renewal order.
+ S NUMREFS=$S($G(PSORENW("# OF REFILLS")):PSORENW("# OF REFILLS"),1:$P(PSORENW("RX0"),"^",9)) I $G(ERXIEN),$$GET1^DIQ(52.49,ERXIEN,.08,"I")="RE",$$GET1^DIQ(52.49,ERXIEN,5.6) D
  . S NUMREFS=$$GET1^DIQ(52.49,ERXIEN,5.6)-1
  S DEA("CS")=0 K DIR,DIC
  F DEA=1:1 Q:$E(PSODRUG("DEA"),DEA)=""  I $E(+PSODRUG("DEA"),DEA)>1,$E(+PSODRUG("DEA"),DEA)<6 S DEA("CS")=1

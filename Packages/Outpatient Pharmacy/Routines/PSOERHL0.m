@@ -1,5 +1,5 @@
 PSOERHL0 ;BIRM/MFR - eRx History Log View - Listman Driver ;04/12/23
- ;;7.0;OUTPATIENT PHARMACY;**700,746,770**;DEC 1997;Build 145
+ ;;7.0;OUTPATIENT PHARMACY;**700,746,770,803**;DEC 1997;Build 1
  ;
 EN(PSOERXID) ;Menu option entry point
  N PSOSRTBY,PSORDER,UNDLN,HIGHLN,REVLN,LASTLINE,VALMCNT
@@ -97,12 +97,12 @@ SETSORT(SORTBY) ;Building the list (line by line)
  S LINE=LINE+1,^TMP("PSOERXHL",$J,LINE,0)=X1,UNDLN(LINE)="1^80"
  I 'OERR S LINE=LINE+1,^TMP("PSOERXHL",$J,LINE,0)="No Order History Available"
  I OERR D
+ . S ORSTAT=$$GET1^DIQ(100,OERR,5,"E")     ;Order Status  ;p803 moved current and next 3 lines outside FLG loop
+ . S DATETM=$$GET1^DIQ(100,OERR,31,"I")    ;Date/Time
+ . S X2=$$FMTE^XLFDT(DATETM,"2Z"),$E(X2,24)=OERR,$E(X2,43)=ORSTAT
+ . S LINE=LINE+1 S ^TMP("PSOERXHL",$J,LINE,0)=X2
  . S FLG=0 F  S FLG=$O(^OR(100,OERR,8,FLG)) Q:'FLG  D
  . . I '$D(^OR(100,OERR,8,FLG,3)) Q
- . . S ORSTAT=$$GET1^DIQ(100,OERR,5,"E")     ;Order Status
- . . S DATETM=$$GET1^DIQ(100,OERR,31,"I")    ;Date/Time
- . . S X2=$$FMTE^XLFDT(DATETM,"2Z"),$E(X2,24)=OERR,$E(X2,43)=ORSTAT
- . . S LINE=LINE+1 S ^TMP("PSOERXHL",$J,LINE,0)=X2
  . . S FLGDT=$$GET1^DIQ(100.008,FLG_","_OERR,33)             ;Date/Time Flagged
  . . S FLGBY=$E($$GET1^DIQ(100.008,FLG_","_OERR,34),1,26)    ;Flagged By
  . . S FLGREA=$$GET1^DIQ(100.008,FLG_","_OERR,35)            ;Flagged Reason

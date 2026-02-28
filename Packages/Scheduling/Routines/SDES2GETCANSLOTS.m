@@ -1,5 +1,5 @@
-SDES2GETCANSLOTS ;ALB/MGD,JAS,BLB,LAB,AGW - VISTA SCHEDULING RPCS GET CLINIC CANCELLED SLOTS ; July 30, 2025
- ;;5.3;Scheduling;**866,880,893,907,918**;Aug 13, 1993;Build 4
+SDES2GETCANSLOTS ;ALB/MGD,JAS,BLB,LAB,AGW,AGW - VISTA SCHEDULING RPCS GET CLINIC CANCELLED SLOTS ; Nov 5, 2025
+ ;;5.3;Scheduling;**866,880,893,907,918,927**;Aug 13, 1993;Build 15
  ;;Per VHA Directive 6402, this routine should not be modified
  ;
  ; External References
@@ -58,10 +58,7 @@ VALIDATEINPUT(SDGETCANCSLOTS,SDCANCDATA,ERROR) ;validate input parameters
  I +CLINICIEN>0 D  Q:ERROR
  . S SDCLNAME=$$GET1^DIQ(44,CLINICIEN_",",.01,"I")  ;retrieve the clinic name
  . I SDCLNAME="" D ERRLOG^SDESJSON(.SDGETCANCSLOTS,80) S ERROR=1 Q  ;clinic IEN not found
- . ;
- . ;AGW;VSE-100427; Call to GETRES^SDES2UTIL1 to get the resource IEN
- . ;
- . S SDCLRESIEN=$$GETRES^SDES2UTIL1(CLINICIEN,"") ;retrieve the resource IEN for the clinic
+ . S SDCLRESIEN=$$GETRES^SDES2UTIL1(CLINICIEN,1) ;retrieve the resource IEN for the clinic
  . I SDCLRESIEN="" D ERRLOG^SDESJSON(.SDGETCANCSLOTS,70) S ERROR=1 Q  ;invalid clinic resource id
  . S SDCANCDATA("SDCLRESIEN")=SDCLRESIEN
  ;

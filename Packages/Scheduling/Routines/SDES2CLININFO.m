@@ -1,5 +1,5 @@
-SDES2CLININFO ;ALB/TJB,JAS,TJB,MCB - Get Clinic Info based on Clinic IEN ;APRIL 5,2025
- ;;5.3;Scheduling;**893,895,898,907**;Aug 13, 1993;Build 5
+SDES2CLININFO ;ALB/TJB,JAS,TJB,MCB,JDJ - Get Clinic Info based on Clinic IEN ;NOV 17,2025
+ ;;5.3;Scheduling;**893,895,898,907,927**;Aug 13, 1993;Build 15
  ;;Per VHA Directive 6402, this routine should not be modified
  ;
  ; Documented API's and Integration Agreements
@@ -209,8 +209,11 @@ BLDCLNREC(SDCLNSREC,SDCLNIEN) ;Get Clinic data
  S SDCLNSREC("Clinic","NoShowLetter")=$G(SDDATA(44,SDCLNIEN_",",2508,"E")) ;NO SHOW LETTER
  S SDCLNSREC("Clinic","NoShowLetterIEN")=$G(SDDATA(44,SDCLNIEN_",",2508,"I")) ;NO SHOW IEN
  S SDCLNSREC("Clinic","PreApptLetter")=$G(SDDATA(44,SDCLNIEN_",",2509,"E")) ;PRE-APPOINTMENT LETTER
+ S SDCLNSREC("Clinic","PreApptLetterIEN")=$G(SDDATA(44,SDCLNIEN_",",2509,"I")) ;PRE-APPOINTMENT LETTER IEN
  S SDCLNSREC("Clinic","CancelLetter")=$G(SDDATA(44,SDCLNIEN_",",2510,"E")) ;CLINIC CANCELLATION LETTER
+ S SDCLNSREC("Clinic","CancelLetterIEN")=$G(SDDATA(44,SDCLNIEN_",",2510,"I")) ;CLINIC CANCELLATION LETTER IEN
  S SDCLNSREC("Clinic","ApptCancelLetter")=$G(SDDATA(44,SDCLNIEN_",",2511,"E")) ;APPT. CANCELLATION LETTER
+ S SDCLNSREC("Clinic","ApptCancelLetterIEN")=$G(SDDATA(44,SDCLNIEN_",",2511,"I")) ;APPT. CANCELLATION LETTER IEN
  S SDCLNSREC("Clinic","CheckinCheckoutTime")=$G(SDDATA(44,SDCLNIEN_",",24,"E")) ;ASK FOR CHECK IN/OUT TIME
  S SDCLNSREC("Clinic","DefaultToPCPractitioner")=$G(SDDATA(44,SDCLNIEN_",",2801,"E")) ;DEFAULT TO PC PRACTITIONER?
  S SDCLNSREC("Clinic","WorkloadValidationCheckout")=$G(SDDATA(44,SDCLNIEN_",",30,"E")) ;WORKLOAD VALIDATION AT CHK OUT
