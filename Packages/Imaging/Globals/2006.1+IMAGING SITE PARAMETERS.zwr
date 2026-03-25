@@ -2,7 +2,7 @@ OSEHRA ZGO Export: IMAGING SITE PARAMETERS
 ZWR
 ^MAG(2006.1,0)="IMAGING SITE PARAMETERS^2006.1P^1^1"
 ^MAG(2006.1,1,0)="500^CPM^2^^^^^^CPM^4"
-^MAG(2006.1,1,1)="^45^^^45^^1755^5^5^1"
+^MAG(2006.1,1,1)="^45^^^45^^1791^5^5^1"
 ^MAG(2006.1,1,2,0)="^2006.112^1^1"
 ^MAG(2006.1,1,2,1,0)="TXT"
 ^MAG(2006.1,1,2,"B","TXT",1)=""
@@ -110,6 +110,7 @@ ZWR
 ^MAG(2006.1,1,6,"B","VI_BP_Eval_Queue",19)=""
 ^MAG(2006.1,1,6,"B","VI_BP_Queue_Processor_failure",11)=""
 ^MAG(2006.1,1,6,"B","Verifier_Scan_Error_log",9)=""
+^MAG(2006.1,1,8)="^"
 ^MAG(2006.1,1,"BPPURGE")="1^DA^1^100000^^^^1^^^"
 ^MAG(2006.1,1,"BPVERIFIER")="1^^1^3110608^2355"
 ^MAG(2006.1,1,"CT2")="Abdomen|350|40~Bone|2000|500~Disk|900|250~Head|80|40~Lung|1500|-700~Mediastinum|500|40~~~"

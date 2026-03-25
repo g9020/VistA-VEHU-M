@@ -1,5 +1,5 @@
 IBCNEHL5A ;AITC/CKB - HL7 Process Incoming RPI Msgs (Cont.) ; 10-JAN-2025
- ;;2.0;INTEGRATED BILLING;**806**;21-MAR-94;Build 19
+ ;;2.0;INTEGRATED BILLING;**806,822**;21-MAR-94;Build 21
  ;;Per VA Directive 6402, this routine should not be modified.
  ;
  Q  ; No direct calls allowed
@@ -55,8 +55,9 @@ LOAD(RIEN) ; Load Medicare policy as a new policy on patient record
  ;Get list of insurance identified in the EB loops of the 271 payer response
  D EBSUMMARY^IBCNEUT2(DFN,RIEN,SOI,.POLICY)
  ;
- I '$O(POLICY(0)) G XLOAD       ;if none was returned on payer response (safety valve)
- I $G(POLICY("OHI"))=1 G XLOAD    ;Indicates Other potential insurance indicated on payer response
+ I '$O(POLICY(0)) G XLOAD           ;IB*822 - if none was returned on payer response (safety valve)
+ I $D(POLICY(1,"Unknown")) G XLOAD  ;if none was returned on payer response (safety valve)
+ I $G(POLICY("OHI"))=1 G XLOAD      ;Indicates Other potential insurance indicated on payer response
  ;If the Medicare Policy in the Response is missing the Effective Date, don't load ANY Medicare policies
  I $G(POLICY("MISSING_EFFDT"))=1 G XLOAD
  ;
@@ -147,10 +148,14 @@ SAVEMWR(RIEN) ;autoload of Medicare policy(s)
  S DATA(2.312,IENS,4.03)=18 ;'18' for SELF
  S DATA(2.312,IENS,1.09)=SOI             ;SOURCE OF INFORMATION (from 270 Inquiry)
  S DATA(2.312,IENS,7.02)=$P(RDATA13,U,2) ;SUBSCRIBER ID
+ ;IB*822/CKB - added PATIENT ID (same as the SUBSCRIBER ID)
+ S DATA(2.312,IENS,5.01)=$P(RDATA13,U,2) ;PATIENT ID
  S DATA(2.312,IENS,8)=EFFDT              ;EFFECTIVE DATE
  ; --Medicare - Optional fields on 271 Payer Response--
  S DATA(2.312,IENS,6)="v"                ;WHOSE INSURANCE - 'v' for VETERAN
  S DATA(2.312,IENS,7.01)=$P(RDATA13,U)   ;NAME OF INSURED
+ ;IB*822/CKB - added STOP POLICY FROM BILLING
+ S DATA(2.312,IENS,3.04)=1               ;STOP POLICY FROM BILLING - '1' for YES
  ;
  ; Get DOB from 271 Payer Response, if null pull from the PATIENT file
  N PRDOB S PRDOB=$P(RDATA1,U,2)
@@ -174,18 +179,22 @@ SAVEMWR(RIEN) ;autoload of Medicare policy(s)
  . S DATA(2.312,IENS,3.08)=$P(RDATA5,U,3) ;City
  . S DATA(2.312,IENS,3.09)=$P(RDATA5,U,4) ;State
  . S DATA(2.312,IENS,3.1)=$P(RDATA5,U,5)  ;Zip
+ . ;IB*822/CKB - added the following fields. Note these are NOT required fields
+ . S DATA(2.312,IENS,3.07)=$P(RDATA5,U,2) ;Street 2
+ . S DATA(2.312,IENS,3.13)=$P(RDATA5,U,6) ;Country 
  I ADDFLG=2 D
  . S DATA(2.312,IENS,3.06)=$$GET1^DIQ(2,DFN_",",.111) ;Street line 1
  . S DATA(2.312,IENS,3.08)=$$GET1^DIQ(2,DFN_",",.114) ;City
  . S DATA(2.312,IENS,3.09)=$$GET1^DIQ(2,DFN_",",.115) ;State
  . S DATA(2.312,IENS,3.1)=$$GET1^DIQ(2,DFN_",",.116)  ;Zip
+ . ;IB*822/CKB - added the following fields. Note these are NOT required fields
+ . S DATA(2.312,IENS,3.07)=$$GET1^DIQ(2,DFN_",",.112)  ;Street 2
+ . S DATA(2.312,IENS,3.13)=$$GET1^DIQ(2,DFN_",",.1173) ;Country
+ ;
  ; --Medicare - other fields from 271 Payer Response--
  N XX
- S XX=$P(RDATA4,U,2)
- I XX'="" S DATA(2.312,IENS,3.07)=XX       ;Street 2
- S XX=$P(RDATA4,U,6)
- I XX'="" S DATA(2.312,IENS,3.13)=XX       ;Country
- S XX=$P(RDATA4,U,9)
+ ;IB*822/CKB - changed RDATA4 & RDATA5 and moved the setting of Street 2 & Country above 
+ S XX=$P(RDATA5,U,9)
  I XX'="" S DATA(2.312,IENS,3.14)=XX       ;Country subdivision
  S XX=$P(RDATA12,U)
  I XX'="" S DATA(2.312,IENS,12.01)=XX      ;Military Info Status Code

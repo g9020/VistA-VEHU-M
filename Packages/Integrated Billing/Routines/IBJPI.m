@@ -1,5 +1,5 @@
 IBJPI ;DAOU/BHS - IBJP eIV SITE PARAMETERS SCREEN ; 01-APR-2015
- ;;2.0;INTEGRATED BILLING;**184,271,316,416,438,479,506,528,549,601,621,659,668,687,702,732,763,771,806**;21-MAR-94;Build 19
+ ;;2.0;INTEGRATED BILLING;**184,271,316,416,438,479,506,528,549,601,621,659,668,687,702,732,763,771,806,822**;21-MAR-94;Build 21
  ;;Per VA Directive 6402, this routine should not be modified.
  ;
  ;/vd-IB*2*668 - Removed the SSVI logic introduced with IB*2*528 in its entirety within VistA.
@@ -86,6 +86,8 @@ BLDGENE(SLINE,ELINE) ; Build the General Editable Parameters Section
  ;IB*763/CKB - Added display for INSURANCE IMPORT SWITCH
  ;S STRTLN=ELINE
  S ELINE=$$SET("                   EII Active: ",$$GET1^DIQ(350.9,"1,",13.02),ELINE,1)
+ ;IB*822 - Added display for E1 Transactions Enabled
+ S ELINE=$$SET("      E1 Transactions Enabled: ",$$GET1^DIQ(350.9,"1,",54.05),ELINE,1)
  ;S ELINE=STRTLN
  S ELINE=$$SET("",$J("",40),ELINE,1)            ; Spacing Blank Line
  S ELINE=$$SET("  IIU Settings ","",ELINE,1)
@@ -102,7 +104,8 @@ BLDGENE(SLINE,ELINE) ; Build the General Editable Parameters Section
  ;
  ;The next line adds blank lines to force the non-editable to a new page
  ;If any lines are added above this line will need to be adjusted.
- F XX=1:1:3 S ELINE=$$SET("",$J("",40),ELINE,1)            ; Spacing Blank Line
+ ;IB*822 - adjusted the number of blank lines from 3 to 2
+ F XX=1:1:2 S ELINE=$$SET("",$J("",40),ELINE,1)            ; Spacing Blank Line
  ;
  Q
  ;

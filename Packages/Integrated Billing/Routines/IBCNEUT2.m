@@ -1,6 +1,8 @@
 IBCNEUT2 ;DAOU/DAC - eIV MISC. UTILITIES ;06-JUN-2002
- ;;2.0;INTEGRATED BILLING;**184,416,435,713,737,806**;21-MAR-94;Build 19
+ ;;2.0;INTEGRATED BILLING;**184,416,435,713,737,806,822**;21-MAR-94;Build 21
  ;;Per VA Directive 6402, this routine should not be modified.
+ ;
+ ; Reference to ^XLFDT  in ICR #10103
  ;
  ; Can't be called from the top
  Q
@@ -41,7 +43,7 @@ BUFF(BUFF,BNG) ;  Set error symbol into Buffer File
  ;    BUFF = Buffer internal entry number
  ;    BNG = Buffer Symbol IEN
  I 'BUFF!'BNG Q
- I +$P($G(^IBA(355.33,BUFF,0)),U,17) Q    ; .12 field not for ePharmacy IB*2*435
+ ;IB*822/CKB - no longer valid -I +$P($G(^IBA(355.33,BUFF,0)),U,17) Q    ; .12 field not for ePharmacy IB*2*435
  NEW DIE,DA,DR,D,D0,DI,DIC,DQ,X,DISYS
  S DIE="^IBA(355.33,",DA=BUFF,DR=".12////^S X=BNG"
  D ^DIE
@@ -145,7 +147,7 @@ EBSUMMARY(DFN,RIEN,SOI,ARRAY) ; Added IB*806
  ; ***********************
  ;
  ; Example:
- ; Insurance Type: Medicare Part A Elig/Ben Info: Active Coverage 
+ ; Insurance Type: Medicare Part A Elig/Ben Info: Active Coverage
  ; Date/Time Qual: Plan D/T Period: 05/01/2019 
  ;
  ; Returns ARRAY(EBCNT,"Medicare Part A")=DFN^"Medicare Part A"^3190501^SOI^"Active Coverage"
@@ -236,7 +238,7 @@ EBSUMMARY(DFN,RIEN,SOI,ARRAY) ; Added IB*806
  . ;
  . S HLDT=""
  . S ZIEN="0,"_IBVIENS,IBOK=0
- . F  S ZIEN=$O(EB(365.28,ZIEN)) Q:ZIEN=""  D  Q:IBOK=1
+ . F  S ZIEN=$O(EB(365.28,ZIEN)) Q:ZIEN=""  D  Q:IBOK=1 
  . . S DTQUAL=$P($G(^IBE(365.026,+$G(EB(365.28,ZIEN,.03,"I")),0)),U,2)
  . . I (MWNRTYP),(DTQUAL'="Plan") Q  ; Medicare policies are only looking for "Plan"
  . . I ('MWNRTYP),((DTQUAL'="Plan")&(DTQUAL'="Plan Begin")) Q  ; Non Medicare policies look for "Plan" & "Plan Begin"
@@ -260,8 +262,10 @@ EBSUMMARY(DFN,RIEN,SOI,ARRAY) ; Added IB*806
  . S ^TMP("EBSUMEUT2",$J,$S(INSTYP="":" ",1:INSTYP),$S(ELGBENINFO="":" ",1:ELGBENINFO),HLDNDT)=""
  ;
  ;
- I '$O(ARRAY(0))&('MWNRTYP) D  ; not for medicare payer
- . S ARRAY(1,"Unknown")=$G(DFN)_U_"Unknown"_U_$G(IBSPDT)_U_$G(SOI)_U_$G(IBELGINF)
+ I '$O(ARRAY(0)) D  ; if no ins type is found 
+ . I 'MWNRTYP S ARRAY(1,"Unknown")=$G(DFN)_U_"Unknown"_U_$G(IBSPDT)_U_$G(SOI)_U_$G(IBELGINF) Q
+ . ; Medicare only
+ . S ARRAY(1,"Unknown")=$G(DFN)_U_"Unknown"_U_"Unknown"_U_$G(SOI)_U_$G(IBELGINF)
  ;
 XEBSUM ;
  ;

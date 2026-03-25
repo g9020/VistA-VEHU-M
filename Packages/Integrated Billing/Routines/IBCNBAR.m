@@ -1,5 +1,5 @@
 IBCNBAR ;ALB/ARH-Ins Buffer: process Accept and Reject ;15 Jan 2009
- ;;2.0;INTEGRATED BILLING;**82,240,345,413,416,497,528,554,595,631,687,737,806**;21-MAR-94;Build 19
+ ;;2.0;INTEGRATED BILLING;**82,240,345,413,416,497,528,554,595,631,687,737,806,822**;21-MAR-94;Build 21
  ;Per VA Directive 6402, this routine should not be modified.
  ;
  ;
@@ -63,7 +63,17 @@ PROCESS ; process all changes selected by user, add/edit insurance files based
  S RESULT(0)="-1^Move Patient Registration data into Insurance files failed"
  I +IBINSDA,+$G(IBMVSUB),+IBGRPDA,+IBPOLDA D SUB^IBCNBMI(IBBUFDA,IBPOLDA,IBRIEN,IBSEL,+IBMVSUB,.RESULT,DFN,IBFNAM,IBVAL,.IBHOLD,.IBXHOLD) W:$G(IBSUPRES)'>0 !,"Subscriber Insurance Information "_IBSUBH_"..."
  ;
+ ;IB*822/DJW - IBELIG is set if we are to save the 271 payer response data (eligibility benefits) to the patient file
+ ; The GRPFILE below is the military rank and diag type of data in the 271 payer response - NOT GROUP/PLAN file data !
+ ; Key words for searching:  EB loop   Eligibility Benefits
  I +IBELIG S RIEN=$O(^IBCN(365,"AF",IBBUFDA,""),-1) I RIEN D GRPFILE^IBCNEHL1(DFN,IBPOLDA,RIEN,0),EBFILE^IBCNEHL1(DFN,IBPOLDA,RIEN,0) W:$G(IBSUPRES)'>0 !,"Eligibility/Benefits data Updated..."  ;IB*2.0*554 Fix spelling error
+ ;
+E1 ;IB*822/CKB - store the E1 Pharmacy Eligibility (BPS RESPONSE entry) to the patient's file
+ ;   IBE1 - is Newed in calling routine IBCNBAA
+ N BPSRIEN,IBPT,IBERR
+ I +$G(IBE1) S BPSRIEN=$$GET1^DIQ(355.33,IBBUFDA,.17,"I") I BPSRIEN D  W:$G(IBSUPRES)'>0 !,"E1 Pharmacy Eligibility data Updated..."
+ . S IBPT(2.312,IBSIEN,8.04)=BPSRIEN
+ . D FILE^DIE("","IBPT","IBERR")
  ;
  ;Only do this update for ICB ACCEPAPI^IBCNICB interface
  I $G(IBSUPRES)>0,+IBMVPOL,+IBGRPDA,+IBPOLDA,'IBNEWPOL D UPDPOL^IBCNICB(.RESULT,IBBUFDA,DFN,IBINSDA,IBGRPDA,IBPOLDA)

@@ -1,8 +1,8 @@
-PSOERX1F ;ALB/MR - Accept/Un-Accept eRx function ; 8/18/2020 5:14pm
- ;;7.0;OUTPATIENT PHARMACY;**617,651,700,746,770**;DEC 1997;Build 145
+PSOERX1F ;ALB/MR - Accept/Un-Accept eRx function; Sep 6, 2025@14:52
+ ;;7.0;OUTPATIENT PHARMACY;**617,651,700,746,770,801**;DEC 1997;Build 2
  ;
- Q
- ;PSOHY("LOC")=IEN of hospital location file (#44) - NOT USED, 
+ Q 
+ ;PSOHY("LOC")=IEN of hospital location file (#44)
  ;PSOHY("CHNUM")=EXTERNAL PLACER ORDER NUMBER (NEED TO FIND OUT HOW WE SHOULD SET THIS) (25)
  ;PSOHY("PICK")=MAIL/WINDOW (20.4) 
  ;PSOHY("ENTER")=ENTERED BY IEN (2.1)
@@ -96,8 +96,10 @@ SETUP ;
  .S QTCNT=QTCNT+1 M PSOHY("QTSUB",QTCNT)=^PS(52.49,PSOIEN,21,QTLOOP)
  ;
  ; Assigning Clinic which the User is logged into
- S (LOC,PSOQUIT)=0
+ ;PSO*7.0*801: moved LOC=0 down three lines
+ S PSOQUIT=0
  I $G(MBMSITE),DUZ'=+$$PROXYDUZ^PSOERXUT(),+$$GET1^DIQ(52.49,PSOIEN,20.6,"I")'=+$G(PSOCLNC) D  I $G(PSOQUIT) S DIR(0)="E" D ^DIR K DIR Q
+ . S LOC=0
  . W !!,"Current Clinic assigned to the eRx: ",$$GET1^DIQ(52.49,PSOIEN,20.6),!
  . K DIC S DIC(0)="AEMQ",DIC=44,DIC("S")="I '$P($G(^(""I"")),U,1)!$P($G(^(""I"")),U,2)"
  . S DIC("A")="Send to eRx Clinic: "

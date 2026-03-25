@@ -1,5 +1,5 @@
 IBCNES ;ALB/ESG - eIV elig/Benefit screen ; 14-Jul-2009
- ;;2.0;INTEGRATED BILLING;**416,438,497,506,702,806**;21-MAR-94;Build 19
+ ;;2.0;INTEGRATED BILLING;**416,438,497,506,702,806,822**;21-MAR-94;Build 21
  ;;Per VHA Directive 2004-038, this routine should not be modified.
  ;
  Q
@@ -116,7 +116,6 @@ INIT(IBVF,IBVIENS,IBVEBFLG,IBVV,IBVSUB) ; List Entry
  ;         
  D SUMMARY   ; Summary of EB loops
  ;
- I 'IBVEBTOT D NODATA G INITX
  ;
  S IBVEBIEN=1,IBVEBCNT=0  ;IB*806/DJW  initialize IBVEBIEN to 1 to skip 1st EB loop (FSC generated loop)
  F  S IBVEBIEN=$O(IBVLIST(IBVEBIEN)) Q:'IBVEBIEN  D

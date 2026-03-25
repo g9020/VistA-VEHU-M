@@ -1,5 +1,5 @@
 TIUCCRHL7P1 ; CCRA/PB - TIU CCRA HL7 Msg Processing; January 6, 2006
- ;;1.0;TEXT INTEGRATION UTILITIES;**337,344,348,349,352,356,366,371**;Sep 27, 2023;Build 4
+ ;;1.0;TEXT INTEGRATION UTILITIES;**337,344,348,349,352,356,366,371,375**;Sep 27, 2023;Build 7
  ;
  ;PB - Patch 344 to modify how the note and addendum text is formatted
  ;PB - Patch 348 modification to parse the note text from NTE segments rather than the OBX segment
@@ -131,7 +131,10 @@ PROCMSG ;
  I $G(ADDENDUM)'="" D
  .N N1 S N1=0 F  S N1=$O(TIUZ("TEXT",N1)) Q:N1'>0  D
  ..I $G(TIUZ("TEXT",N1,0))["Original CCP Note Date (mm/dd/yyyy):" S NOTEDATE=$P(TIUZ("TEXT",N1,0),": ",2)
- ..I $G(TIUZ("TEXT",N1,0))["CCPN Number:" S NOTENUM=$P(TIUZ("TEXT",N1,0),": ",2)
+ ..I $G(TIUZ("TEXT",N1,0))["CCPN Number:" S NOTENUM=$P(TIUZ("TEXT",N1,0),":",2)
+ ..;patch 375 - get ccpn number based on a colon and not space and a colon then a space. 
+ ..;S:$G(NOTENUM)'>0&$G(TIUZ("TEXT",N1,0))["CCPN Number:" NOTENUM=$P(TIUZ("TEXT",N1,0),":",2)
+ ..I $G(NOTENUM)=""&$G(TIUZ("TEXT",N1,0))["CCPN Number: " S NOTENUM=$P(TIUZ("TEXT",N1,0),": ",2)
  .S:$G(NOTENUM)'="" TIUIEN=$$TIULKUP^TIUCCHL7UT(CONSULTID,TIU("TDA"),$G(NOTEDATE),NOTENUM)
  ;
  D CONTINUE^TIUCCRHL7P2

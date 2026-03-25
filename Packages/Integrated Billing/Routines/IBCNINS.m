@@ -1,5 +1,5 @@
 IBCNINS ;AITC/TAZ - NIGHTLY INSURANCE PROCESS ; 23-NOV-2020
- ;;2.0;INTEGRATED BILLING;**687,771,806**;21-MAR-94;Build 19
+ ;;2.0;INTEGRATED BILLING;**687,771,806,822**;21-MAR-94;Build 21
  ;;Per VA Directive 6402, this routine should not be modified.
  ;
  Q
@@ -29,6 +29,9 @@ EN ;Main Entry Point for Nightly Process
  ; Send Daily Buffer Report email - Summary Version from production sites only
  I $$PROD^XUPROD(1) D DBR^IBCNOR2
  ;
+ ; IB*822/DTG check patient verify date for selected Insurance Co's.
+ D DBR^IBCNERTC
+ ;
 ENQ ;Exit
  Q
  ;
@@ -36,15 +39,17 @@ ENQ ;Exit
 CHKPER ;
  ; Check for the existence of the New Person (#200) entries listed below.
  ; Send a mailman message to "VHAeInsuranceRapidResponse@domain.ext" if any are missing.
- ; Entries to check: "INTERFACE,IB IIU", "INTERFACE,IB EIV", "AUTOUPDATE,IBEIV", "IB,BUFFER CLEANUP"
+ ; Entries to check: "INTERFACE,IB IIU", "INTERFACE,IB EIV", "AUTOUPDATE,IBEIV", "IB,BUFFER CLEANUP", "IB,AUTOINS FILEUPDATE"
  N IBAUTO,IBEIV,IBIIU,WKDT,IBMCT,MSG,MGRP,IBXMY
  N IBBUFCLN S IBBUFCLN=""  ;IB*806/DTG new var for IB Buffer Cleanup
+ N IBBINSEL S IBBINSEL=""  ;IB*822/DTG for new selected insurance verify checks
  ;
  S IBIIU=+$$FIND1^DIC(200,,"MX","INTERFACE,IB IIU")
  S IBAUTO=+$$FIND1^DIC(200,,"MX","AUTOUPDATE,IBEIV"),IBEIV=+$$FIND1^DIC(200,,"MX","INTERFACE,IB EIV")
  S IBBUFCLN=+$$FIND1^DIC(200,,"MX","IB,BUFFER CLEANUP")  ; IB*806/DTG new var for IB Buffer Cleanup
- ;I IBIIU,IBAUTO,IBEIV Q
- I IBIIU,IBAUTO,IBEIV,IBBUFCLN Q  ; IB*806/DTG new var for IB Buffer Cleanup
+ S IBBINSEL=+$$FIND1^DIC(200,,"MX","IB,AUTOINS FILEUPDATE")  ; IB*822/DTG new var for IB Selected Insurances
+ ;I IBIIU,IBAUTO,IBEIV,IBBUFCLN Q  ; IB*806/DTG new var for IB Buffer Cleanup
+ I IBIIU,IBAUTO,IBEIV,IBBUFCLN,IBBINSEL Q  ; IB*822/DTG new var for Pt policy verify date for selected Insurance Co's
  ;
  S WKDT=$$SITE^VASITE()
  S MSG(1)="Missing EIV New Person entries, for station "_$P(WKDT,U,3)_":"_$P(WKDT,U,2)
@@ -54,6 +59,7 @@ CHKPER ;
  I 'IBAUTO S MSG(IBMCT)="Entry for 'AUTOUPDATE,IBEIV' is missing",IBMCT=IBMCT+1
  I 'IBEIV S MSG(IBMCT)="Entry for 'INTERFACE,IB EIV' is missing",IBMCT=IBMCT+1
  I 'IBBUFCLN S MSG(IBMCT)="Entry for 'IB,BUFFER CLEANUP' is missing",IBMCT=IBMCT+1
+ I 'IBBINSEL S MSG(IBMCT)="Entry for 'IB,AUTOINS FILEUPDATE' is missing",IBMCT=IBMCT+1
  S MSG(IBMCT)="-------------------------------------------------------------------------------"
  S MGRP=$$MGRP^IBCNEUT5()
  ;
